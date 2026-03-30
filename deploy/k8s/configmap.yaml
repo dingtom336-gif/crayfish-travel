@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: crayfish-travel
+data:
+  SERVER_PORT: "8080"
+  SERVER_MODE: "release"
+  DB_HOST: "postgres"
+  DB_PORT: "5432"
+  DB_USER: "crayfish_user"
+  DB_NAME: "crayfish_travel"
+  DB_SSLMODE: "require"
+  REDIS_ADDR: "redis:6379"

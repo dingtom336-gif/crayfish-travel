@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: crayfish-postgres
+    environment:
+      POSTGRES_USER: crayfish_user
+      POSTGRES_PASSWORD: crayfish_dev_password
+      POSTGRES_DB: crayfish_travel
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crayfish_user -d crayfish_travel"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: crayfish-redis
+    command: redis-server --notify-keyspace-events Ex
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: crayfish-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: crayfish_user
+      DB_PASSWORD: crayfish_dev_password
+      DB_NAME: crayfish_travel
+      DB_SSLMODE: disable
+      REDIS_ADDR: redis:6379
+      SERVER_PORT: 8080
+      SERVER_MODE: release
+    ports:
+      - "8080:8080"
+
+  web:
+    image: node:20-alpine
+    container_name: crayfish-web
+    working_dir: /app
+    volumes:
+      - ../web:/app
+    command: sh -c "npm install && npm run dev"
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_BASE_URL: http://backend:8080
+
+volumes:
+  pgdata:
+  redisdata:

@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: compliance-check
+        name: Compliance Vocabulary Scan (ANALYSIS.md 6.10)
+        entry: bash scripts/compliance-check.sh
+        language: system
+        pass_filenames: false
+        always_run: true

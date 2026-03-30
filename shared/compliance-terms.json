@@ -1,0 +1,24 @@
+{
+  "version": "1.0",
+  "description": "ANALYSIS.md 6.10 compliance vocabulary wall. Single source of truth for the entire project.",
+  "forbidden_words": {
+    "zh": ["保险", "保费", "理赔", "承保", "投保"],
+    "en": ["insurance", "premium", "claim", "insure", "underwrite", "coverage"]
+  },
+  "forbidden_field_names": ["insurance", "insurance_fee", "insurance_id", "insure", "premium"],
+  "allowed_alternatives": {
+    "保险": "退改保障 / 无忧退改服务",
+    "保费": "服务费",
+    "理赔": "退款处理 / 全额退款",
+    "承保": "保障覆盖",
+    "投保": "开通服务",
+    "险": "权益 / 保障",
+    "insurance": "refund_guarantee",
+    "premium": "service_fee"
+  },
+  "recommended_display_terms": {
+    "price_line": "无忧退改服务费",
+    "card_guarantee": "随时退改，全额无损退款",
+    "agreement_definition": "技术与服务垫资费"
+  }
+}

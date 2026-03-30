@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: crayfish_user
+          POSTGRES_PASSWORD: crayfish_dev_password
+          POSTGRES_DB: crayfish_travel
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U crayfish_user -d crayfish_travel"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Download modules
+        working-directory: backend
+        run: go mod download
+
+      - name: Build
+        working-directory: backend
+        run: go build ./...
+
+      - name: Vet
+        working-directory: backend
+        run: go vet ./...
+
+      - name: Test
+        working-directory: backend
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: crayfish_user
+          DB_PASSWORD: crayfish_dev_password
+          DB_NAME: crayfish_travel
+          REDIS_ADDR: localhost:6379
+        run: go test -race -cover ./...
+
+      - name: Compliance scan
+        working-directory: backend
+        run: |
+          if grep -rn --include='*.go' -iE '\b(insurance|premium|claim)\b' .; then
+            echo "COMPLIANCE VIOLATION: forbidden terms found"
+            exit 1
+          fi
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Build
+        working-directory: web
+        run: npm run build

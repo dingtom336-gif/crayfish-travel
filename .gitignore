@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build outputs
+backend/bin/
+web/.next/
+web/out/
+miniprogram/dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+__debug_bin*
+
+# Coverage
+coverage/
+*.lcov
+cover.out
+cover.html
+
+# Docker volumes
+pgdata/
+redisdata/
+
+# Swagger generated
+backend/docs/swagger.json
+backend/docs/swagger.yaml
+backend/docs/docs.go
+
+# Stitch
+.stitch/
