@@ -27,18 +27,18 @@ func NewFallbackParser(ark *ARKClient, heuristic *HeuristicParser) *FallbackPars
 	return &FallbackParser{ark: ark, heuristic: heuristic}
 }
 
-// Parse tries ARK first; on failure falls back to heuristic extraction.
+// Parse tries heuristic first (instant); only calls ARK LLM when heuristic can't match.
 func (f *FallbackParser) Parse(rawInput string) (*TravelRequirement, error) {
-	// Try ARK LLM first
-	result, err := f.ark.Parse(rawInput)
-	if err == nil {
-		return result, nil
-	}
-
-	// Fall back to heuristic parser
+	// Try heuristic first (0ms, no network)
 	hResult, matched := f.heuristic.Parse(rawInput)
 	if matched {
 		return hResult, nil
+	}
+
+	// Heuristic couldn't match -- fall back to ARK LLM (slower but smarter)
+	result, err := f.ark.Parse(rawInput)
+	if err == nil && result.Destination != "" {
+		return result, nil
 	}
 
 	return nil, fmt.Errorf("无法解析旅行需求，请描述更具体的目的地")
