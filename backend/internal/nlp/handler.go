@@ -101,11 +101,16 @@ func (h *Handler) Parse(c *gin.Context) {
 		return
 	}
 
-	// Validate dates
-	validation, err := h.validator.Validate(requirement.StartDate, requirement.EndDate)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	// Validate dates only if the parser extracted them
+	var validation *DateValidation
+	if requirement.StartDate != "" && requirement.EndDate != "" {
+		validation, err = h.validator.Validate(requirement.StartDate, requirement.EndDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	} else {
+		validation = &DateValidation{IsValid: true}
 	}
 
 	// Update session with raw input
