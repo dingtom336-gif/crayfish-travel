@@ -48,3 +48,5 @@ backend/docs/docs.go
 
 # Stitch
 .stitch/
+e2e-tests/
+.github/

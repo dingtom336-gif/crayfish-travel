@@ -2,6 +2,7 @@ package identity
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -91,6 +92,82 @@ func (h *Handler) Create(c *gin.Context) {
 		SessionID: sessionID.String(),
 		ExpiresAt: rec.ExpiresAt.Format(time.RFC3339),
 		TraceID:   traceID,
+	})
+}
+
+// CreateSessionRequest is the request for lightweight session creation (no PII).
+type CreateSessionRequest struct {
+	Adults   int `json:"adults" binding:"required,min=1"`
+	Children int `json:"children" binding:"min=0"`
+}
+
+// CreateSession creates a session without PII collection.
+func (h *Handler) CreateSession(c *gin.Context) {
+	var req CreateSessionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	traceID := middleware.GetTraceID(c)
+	var sessionID uuid.UUID
+	err := h.db.QueryRow(`
+		INSERT INTO sessions (trace_id, status, adults, children)
+		VALUES ($1, 'session_created', $2, $3)
+		RETURNING id`,
+		traceID, req.Adults, req.Children,
+	).Scan(&sessionID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create session"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"session_id": sessionID.String(),
+		"trace_id":   traceID,
+	})
+}
+
+// GetSession returns the current session state.
+func (h *Handler) GetSession(c *gin.Context) {
+	sessionID, err := uuid.Parse(c.Param("session_id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid session_id"})
+		return
+	}
+
+	var dest, startDate, endDate, status sql.NullString
+	var budgetCents sql.NullInt64
+	var adults, children sql.NullInt32
+	var prefsJSON sql.NullString
+
+	err = h.db.QueryRow(`
+		SELECT destination, start_date, end_date, budget_cents, adults, children, preferences, status
+		FROM sessions WHERE id = $1`, sessionID,
+	).Scan(&dest, &startDate, &endDate, &budgetCents, &adults, &children, &prefsJSON, &status)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "session not found"})
+		return
+	}
+
+	var prefs []string
+	if prefsJSON.Valid && prefsJSON.String != "" {
+		_ = json.Unmarshal([]byte(prefsJSON.String), &prefs)
+	}
+	if prefs == nil {
+		prefs = []string{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"session_id":  sessionID.String(),
+		"destination": dest.String,
+		"start_date":  startDate.String,
+		"end_date":    endDate.String,
+		"budget_cents": budgetCents.Int64,
+		"adults":      adults.Int32,
+		"children":    children.Int32,
+		"preferences": prefs,
+		"status":      status.String,
 	})
 }
 

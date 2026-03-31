@@ -88,7 +88,7 @@ export default function HomePage() {
                         <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2 border border-gray-100">
                           <button
                             type="button"
-                            className="text-xl font-bold"
+                            className="w-10 h-10 flex items-center justify-center text-xl font-bold rounded-lg hover:bg-blue-50 active:bg-blue-100 transition-colors cursor-pointer select-none"
                             style={{ color: "var(--color-trust-blue)" }}
                             onClick={() => updateField("adults", Math.max(1, form.adults - 1))}
                           >
@@ -97,7 +97,7 @@ export default function HomePage() {
                           <span className="font-bold">{form.adults}</span>
                           <button
                             type="button"
-                            className="text-xl font-bold"
+                            className="w-10 h-10 flex items-center justify-center text-xl font-bold rounded-lg hover:bg-blue-50 active:bg-blue-100 transition-colors cursor-pointer select-none"
                             style={{ color: "var(--color-trust-blue)" }}
                             onClick={() => updateField("adults", form.adults + 1)}
                           >
@@ -110,7 +110,7 @@ export default function HomePage() {
                         <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2 border border-gray-100">
                           <button
                             type="button"
-                            className="text-xl font-bold"
+                            className="w-10 h-10 flex items-center justify-center text-xl font-bold rounded-lg hover:bg-blue-50 active:bg-blue-100 transition-colors cursor-pointer select-none"
                             style={{ color: "var(--color-trust-blue)" }}
                             onClick={() => updateField("children", Math.max(0, form.children - 1))}
                           >
@@ -119,7 +119,7 @@ export default function HomePage() {
                           <span className="font-bold">{form.children}</span>
                           <button
                             type="button"
-                            className="text-xl font-bold"
+                            className="w-10 h-10 flex items-center justify-center text-xl font-bold rounded-lg hover:bg-blue-50 active:bg-blue-100 transition-colors cursor-pointer select-none"
                             style={{ color: "var(--color-trust-blue)" }}
                             onClick={() => updateField("children", form.children + 1)}
                           >

@@ -191,7 +191,13 @@ func (fp *FundPool) computeBalance() (BalanceInfo, error) {
 }
 
 // computeBalanceInTx calculates the current balance within a transaction.
+// Uses pg_advisory_xact_lock to serialize concurrent balance computations.
 func (fp *FundPool) computeBalanceInTx(tx *sql.Tx) (BalanceInfo, error) {
+	// Advisory lock scoped to this transaction; released on commit/rollback
+	if _, err := tx.Exec(`SELECT pg_advisory_xact_lock(1001)`); err != nil {
+		return BalanceInfo{}, fmt.Errorf("failed to acquire advisory lock: %w", err)
+	}
+
 	var deposits, freezes, unfreezes, settles, refunds int64
 	err := tx.QueryRow(`
 		SELECT
@@ -200,8 +206,7 @@ func (fp *FundPool) computeBalanceInTx(tx *sql.Tx) (BalanceInfo, error) {
 			COALESCE(SUM(CASE WHEN operation = 'UNFREEZE' THEN amount_cents ELSE 0 END), 0),
 			COALESCE(SUM(CASE WHEN operation = 'SETTLE' THEN amount_cents ELSE 0 END), 0),
 			COALESCE(SUM(CASE WHEN operation = 'REFUND' THEN amount_cents ELSE 0 END), 0)
-		FROM fund_pool_ledger
-		FOR UPDATE`,
+		FROM fund_pool_ledger`,
 	).Scan(&deposits, &freezes, &unfreezes, &settles, &refunds)
 	if err != nil {
 		return BalanceInfo{}, fmt.Errorf("failed to compute balance in tx: %w", err)

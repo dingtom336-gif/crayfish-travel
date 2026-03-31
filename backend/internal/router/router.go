@@ -56,6 +56,10 @@ func Setup(mode string, h *Handlers, allowedOrigins []string, adminToken string)
 	// API v1
 	v1 := r.Group("/api/v1")
 	{
+		// Sessions (lightweight, no PII)
+		v1.POST("/sessions", h.Identity.CreateSession)
+		v1.GET("/sessions/:session_id", h.Identity.GetSession)
+
 		// Identity (real handlers)
 		identityGroup := v1.Group("/identity")
 		{
