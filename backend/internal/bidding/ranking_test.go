@@ -4,14 +4,15 @@ import (
 	"testing"
 )
 
-func TestRankTop5_SortsByPrice(t *testing.T) {
+func TestRankTop5_MultiFactorScoring(t *testing.T) {
+	// Quote with low price + high rating + high reviews should rank first
 	quotes := []Quote{
-		{PackageTitle: "Expensive", BasePriceCents: 100000, RefundGuaranteeFeeCents: 10000, TotalPriceCents: 110000},
-		{PackageTitle: "Cheapest", BasePriceCents: 50000, RefundGuaranteeFeeCents: 10000, TotalPriceCents: 60000},
-		{PackageTitle: "Mid", BasePriceCents: 70000, RefundGuaranteeFeeCents: 10000, TotalPriceCents: 80000},
-		{PackageTitle: "High", BasePriceCents: 90000, RefundGuaranteeFeeCents: 10000, TotalPriceCents: 100000},
-		{PackageTitle: "Low", BasePriceCents: 55000, RefundGuaranteeFeeCents: 10000, TotalPriceCents: 65000},
-		{PackageTitle: "Extra", BasePriceCents: 120000, RefundGuaranteeFeeCents: 10000, TotalPriceCents: 130000},
+		{PackageTitle: "Expensive", BasePriceCents: 100000, RefundGuaranteeFeeCents: 10000, TotalPriceCents: 110000, StarRating: 3.0, ReviewCount: 10},
+		{PackageTitle: "BestValue", BasePriceCents: 50000, RefundGuaranteeFeeCents: 10000, TotalPriceCents: 60000, StarRating: 4.8, ReviewCount: 200},
+		{PackageTitle: "Mid", BasePriceCents: 70000, RefundGuaranteeFeeCents: 10000, TotalPriceCents: 80000, StarRating: 4.5, ReviewCount: 100},
+		{PackageTitle: "High", BasePriceCents: 90000, RefundGuaranteeFeeCents: 10000, TotalPriceCents: 100000, StarRating: 4.0, ReviewCount: 50},
+		{PackageTitle: "Low", BasePriceCents: 55000, RefundGuaranteeFeeCents: 10000, TotalPriceCents: 65000, StarRating: 4.2, ReviewCount: 80},
+		{PackageTitle: "Extra", BasePriceCents: 120000, RefundGuaranteeFeeCents: 10000, TotalPriceCents: 130000, StarRating: 2.5, ReviewCount: 5},
 	}
 
 	ranked := RankTop5(quotes)
@@ -20,17 +21,9 @@ func TestRankTop5_SortsByPrice(t *testing.T) {
 		t.Fatalf("expected 5 ranked quotes, got %d", len(ranked))
 	}
 
-	// First should be cheapest
-	if ranked[0].PackageTitle != "Cheapest" {
-		t.Errorf("rank 1 should be Cheapest, got %s", ranked[0].PackageTitle)
-	}
-
-	// Should be sorted ascending
-	for i := 1; i < len(ranked); i++ {
-		if ranked[i].TotalPriceCents < ranked[i-1].TotalPriceCents {
-			t.Errorf("rank %d (%d) is cheaper than rank %d (%d)",
-				i+1, ranked[i].TotalPriceCents, i, ranked[i-1].TotalPriceCents)
-		}
+	// BestValue has lowest price + highest rating + most reviews, should rank first
+	if ranked[0].PackageTitle != "BestValue" {
+		t.Errorf("rank 1 should be BestValue, got %s", ranked[0].PackageTitle)
 	}
 
 	// First should be best value
@@ -50,6 +43,7 @@ func TestRankTop5_SortsByPrice(t *testing.T) {
 		}
 	}
 }
+
 
 func TestRankTop5_LessThan5(t *testing.T) {
 	quotes := []Quote{

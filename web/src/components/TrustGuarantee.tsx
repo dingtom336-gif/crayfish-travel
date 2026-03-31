@@ -14,9 +14,9 @@ export function TrustGuarantee() {
           />
         </svg>
         <div>
-          <p className="text-xs font-bold text-[var(--color-success-green)]">100% 服务保障</p>
+          <p className="text-xs font-bold text-[var(--color-success-green)]">退改权益保障</p>
           <p className="mt-1 text-[10px] text-gray-500">
-            所有方案均包含无忧退改服务，保障您的出行权益。
+            所有方案均包含无忧退改服务，保障您的出行权益。具体退款规则请参见退款权益说明。
           </p>
         </div>
       </div>

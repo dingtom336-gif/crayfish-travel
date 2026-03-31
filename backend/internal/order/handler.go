@@ -124,14 +124,13 @@ func (h *Handler) RequestRefund(c *gin.Context) {
 		return
 	}
 
-	// Process the full refund flow asynchronously
+	// Process the full refund flow synchronously so user gets the result
 	if h.refundProcessor != nil {
-		go func() {
-			bgCtx := context.Background()
-			if err := h.refundProcessor.ProcessRefund(bgCtx, orderID, traceID); err != nil {
-				log.Printf("[OrderHandler] refund processing failed for order=%s trace=%s: %v", orderID, traceID, err)
-			}
-		}()
+		if err := h.refundProcessor.ProcessRefund(c.Request.Context(), orderID, traceID); err != nil {
+			log.Printf("[OrderHandler] refund processing failed for order=%s trace=%s: %v", orderID, traceID, err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "refund processing failed: " + err.Error()})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, RefundRequest{

@@ -3,6 +3,7 @@ package nlp
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,17 +11,50 @@ import (
 	"github.com/xiaozhang/crayfish-travel/backend/internal/common/middleware"
 )
 
+// NLPParser defines the interface for parsing natural language into travel requirements.
+type NLPParser interface {
+	Parse(rawInput string) (*TravelRequirement, error)
+}
+
+// FallbackParser tries ARKClient first, then HeuristicParser as fallback.
+type FallbackParser struct {
+	ark       *ARKClient
+	heuristic *HeuristicParser
+}
+
+// NewFallbackParser creates a parser that tries ARK first, heuristic second.
+func NewFallbackParser(ark *ARKClient, heuristic *HeuristicParser) *FallbackParser {
+	return &FallbackParser{ark: ark, heuristic: heuristic}
+}
+
+// Parse tries ARK first; on failure falls back to heuristic extraction.
+func (f *FallbackParser) Parse(rawInput string) (*TravelRequirement, error) {
+	// Try ARK LLM first
+	result, err := f.ark.Parse(rawInput)
+	if err == nil {
+		return result, nil
+	}
+
+	// Fall back to heuristic parser
+	hResult, matched := f.heuristic.Parse(rawInput)
+	if matched {
+		return hResult, nil
+	}
+
+	return nil, fmt.Errorf("all parsers failed: ark error: %w; heuristic: no match", err)
+}
+
 // Handler handles NLP-related HTTP requests.
 type Handler struct {
-	claude    *ClaudeClient
+	parser    NLPParser
 	validator *DateValidator
 	db        *sql.DB
 }
 
 // NewHandler creates a new NLP handler.
-func NewHandler(db *sql.DB, claude *ClaudeClient, validator *DateValidator) *Handler {
+func NewHandler(db *sql.DB, parser NLPParser, validator *DateValidator) *Handler {
 	return &Handler{
-		claude:    claude,
+		parser:    parser,
 		validator: validator,
 		db:        db,
 	}
@@ -60,8 +94,8 @@ func (h *Handler) Parse(c *gin.Context) {
 
 	traceID := middleware.GetTraceID(c)
 
-	// Parse with Claude
-	requirement, err := h.claude.Parse(req.RawInput)
+	// Parse with NLP parser (ARK + heuristic fallback)
+	requirement, err := h.parser.Parse(req.RawInput)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to parse requirements"})
 		return

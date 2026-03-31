@@ -49,9 +49,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to init lunar service: %v", err)
 	}
-	claudeClient := nlp.NewClaudeClient(cfg.Claude.APIKey, cfg.Claude.Model, cfg.Claude.Timeout)
+	arkClient := nlp.NewARKClient(cfg.ARK.APIKey, cfg.ARK.BaseURL, cfg.ARK.Model, cfg.ARK.Temperature, cfg.ARK.MaxTokens, cfg.ARK.Timeout)
+	heuristicParser := nlp.NewHeuristicParser()
+	fallbackParser := nlp.NewFallbackParser(arkClient, heuristicParser)
 	dateValidator := nlp.NewDateValidator(lunarSvc)
-	nlpHandler := nlp.NewHandler(db, claudeClient, dateValidator)
+	nlpHandler := nlp.NewHandler(db, fallbackParser, dateValidator)
 
 	// Bidding module (FlyAI real data with Chinese mock fallback)
 	supplier := bidding.NewFlyAISupplier()
@@ -105,7 +107,7 @@ func main() {
 		RiskControl: riskcontrolHandler,
 	}
 
-	r := router.Setup(cfg.Server.Mode, handlers)
+	r := router.Setup(cfg.Server.Mode, handlers, cfg.AllowedOrigins, cfg.AdminToken)
 
 	log.Printf("Crayfish Travel server starting on :%s", cfg.Server.Port)
 	if err := r.Run(":" + cfg.Server.Port); err != nil {

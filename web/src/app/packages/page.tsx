@@ -11,7 +11,6 @@ import { CountdownTimer } from "@/components/CountdownTimer"
 import { PackagesSkeleton, EmptyState } from "@/components/Skeleton"
 import { TripSidebar } from "@/components/TripSidebar"
 import { TrustGuarantee } from "@/components/TrustGuarantee"
-import { CompareBar } from "@/components/CompareBar"
 
 const HIGHLIGHT_COLORS = [
   "bg-blue-50 text-[var(--color-trust-blue)]",
@@ -241,11 +240,6 @@ function PackagesContent() {
         </div>
       </div>
 
-      {/* Compare Bar */}
-      <CompareBar selectedCount={0} onCompare={() => {}} />
-
-      {/* Spacer for sticky bar */}
-      <div className="h-24" />
     </main>
   )
 }

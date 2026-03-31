@@ -200,7 +200,8 @@ func (fp *FundPool) computeBalanceInTx(tx *sql.Tx) (BalanceInfo, error) {
 			COALESCE(SUM(CASE WHEN operation = 'UNFREEZE' THEN amount_cents ELSE 0 END), 0),
 			COALESCE(SUM(CASE WHEN operation = 'SETTLE' THEN amount_cents ELSE 0 END), 0),
 			COALESCE(SUM(CASE WHEN operation = 'REFUND' THEN amount_cents ELSE 0 END), 0)
-		FROM fund_pool_ledger`,
+		FROM fund_pool_ledger
+		FOR UPDATE`,
 	).Scan(&deposits, &freezes, &unfreezes, &settles, &refunds)
 	if err != nil {
 		return BalanceInfo{}, fmt.Errorf("failed to compute balance in tx: %w", err)

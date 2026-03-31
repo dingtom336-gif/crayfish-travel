@@ -6,11 +6,14 @@ import (
 
 // Config holds all application configuration.
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	Redis    RedisConfig
-	Claude   ClaudeConfig
-	Security SecurityConfig
+	Server         ServerConfig
+	Database       DatabaseConfig
+	Redis          RedisConfig
+	Claude         ClaudeConfig
+	ARK            ARKConfig
+	Security       SecurityConfig
+	AllowedOrigins []string
+	AdminToken     string
 }
 
 type ServerConfig struct {
@@ -39,6 +42,16 @@ type ClaudeConfig struct {
 	Timeout int // seconds
 }
 
+// ARKConfig holds Volcengine ARK API configuration for MiniMax M2.5.
+type ARKConfig struct {
+	APIKey      string
+	BaseURL     string
+	Model       string
+	Temperature float64
+	MaxTokens   int
+	Timeout     int // seconds
+}
+
 type SecurityConfig struct {
 	AESKey string // 32-byte hex-encoded key for AES-256-GCM
 }
@@ -58,7 +71,6 @@ func Load() (*Config, error) {
 	viper.SetDefault("database.host", "localhost")
 	viper.SetDefault("database.port", 5432)
 	viper.SetDefault("database.user", "crayfish_user")
-	viper.SetDefault("database.password", "crayfish_dev_password")
 	viper.SetDefault("database.dbname", "crayfish_travel")
 	viper.SetDefault("database.sslmode", "disable")
 	viper.SetDefault("redis.addr", "localhost:6379")
@@ -66,8 +78,12 @@ func Load() (*Config, error) {
 	viper.SetDefault("redis.db", 0)
 	viper.SetDefault("claude.model", "claude-sonnet-4-20250514")
 	viper.SetDefault("claude.timeout", 10)
-	// Dev-only default AES key (32 bytes hex = 64 hex chars)
-	viper.SetDefault("security.aeskey", "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
+	// ARK (Volcengine) defaults
+	viper.SetDefault("ark.baseurl", "https://ark.cn-beijing.volces.com/api/coding/v3")
+	viper.SetDefault("ark.model", "minimax-m2.5")
+	viper.SetDefault("ark.temperature", 0.1)
+	viper.SetDefault("ark.maxtokens", 256)
+	viper.SetDefault("ark.timeout", 10)
 
 	_ = viper.ReadInConfig() // ok if config file not found
 
@@ -94,9 +110,24 @@ func Load() (*Config, error) {
 			Model:   viper.GetString("claude.model"),
 			Timeout: viper.GetInt("claude.timeout"),
 		},
+		ARK: ARKConfig{
+			APIKey:      viper.GetString("ark.apikey"),
+			BaseURL:     viper.GetString("ark.baseurl"),
+			Model:       viper.GetString("ark.model"),
+			Temperature: viper.GetFloat64("ark.temperature"),
+			MaxTokens:   viper.GetInt("ark.maxtokens"),
+			Timeout:     viper.GetInt("ark.timeout"),
+		},
 		Security: SecurityConfig{
 			AESKey: viper.GetString("security.aeskey"),
 		},
+		AllowedOrigins: viper.GetStringSlice("allowedorigins"),
+		AdminToken:     viper.GetString("admintoken"),
+	}
+
+	// Defaults for allowed origins if not configured
+	if len(cfg.AllowedOrigins) == 0 {
+		cfg.AllowedOrigins = []string{"http://localhost:3000", "http://localhost:3010", "http://150.158.192.237"}
 	}
 
 	return cfg, nil

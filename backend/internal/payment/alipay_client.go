@@ -2,6 +2,7 @@ package payment
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"time"
 
@@ -55,6 +56,7 @@ func (m *MockAlipayClient) CreateVoiceToken(outTradeNo string, amountCents int64
 
 // VerifyCallback always returns true in mock mode.
 func (m *MockAlipayClient) VerifyCallback(_ map[string]string) (bool, error) {
+	log.Printf("[WARNING] Mock Alipay: VerifyCallback always returns true. Do NOT use in production.")
 	return true, nil
 }
 

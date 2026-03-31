@@ -35,12 +35,32 @@ function ConfirmContent() {
     const storedReq = getSessionData<TravelRequirement>("requirement")
     const storedVal = getSessionData<DateValidation>("validation")
 
-    if (storedReq) setRequirement(storedReq)
-    if (storedVal) setValidation(storedVal)
-
-    if (!storedReq && !sessionId) {
-      router.replace("/")
+    if (storedReq) {
+      setRequirement(storedReq)
+      if (storedVal) setValidation(storedVal)
+      return
     }
+
+    // Fallback: fetch from backend if sessionStorage is empty (e.g. after refresh)
+    if (sessionId) {
+      api.getSession(sessionId).then((session) => {
+        const req: TravelRequirement = {
+          destination: session.destination,
+          start_date: session.start_date,
+          end_date: session.end_date,
+          budget_cents: session.budget_cents,
+          adults: session.adults,
+          children: session.children,
+          preferences: session.preferences || [],
+        }
+        setRequirement(req)
+      }).catch(() => {
+        router.replace("/")
+      })
+      return
+    }
+
+    router.replace("/")
   }, [sessionId, router])
 
   async function handleConfirm() {
@@ -71,8 +91,6 @@ function ConfirmContent() {
     )
   }
 
-  const totalTravelers = requirement.adults + requirement.children
-
   return (
     <main className="bg-gray-50 py-8 md:py-12 flex-1">
       <div className="max-w-7xl mx-auto px-4 md:px-8">
@@ -80,7 +98,7 @@ function ConfirmContent() {
         <div className="mb-12 flex justify-center">
           <StepProgress
             steps={[
-              { label: "身份验证", status: "completed" },
+              { label: "需求描述", status: "completed" },
               { label: "行程确认", status: "active" },
               { label: "定制方案", status: "pending" },
             ]}
@@ -135,22 +153,26 @@ function ConfirmContent() {
                 </div>
               </div>
 
-              {/* AI parsing area */}
+              {/* AI parsed result */}
               <div className="mx-6 mb-6 bg-blue-50/50 rounded-xl p-6 border border-blue-100 border-dashed">
                 <div className="flex items-center space-x-3 mb-4">
                   <div className="flex space-x-1">
-                    <div className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: "var(--color-trust-blue)" }} />
-                    <div className="w-2 h-2 rounded-full animate-bounce [animation-delay:-0.15s]" style={{ backgroundColor: "var(--color-trust-blue)" }} />
-                    <div className="w-2 h-2 rounded-full animate-bounce [animation-delay:-0.3s]" style={{ backgroundColor: "var(--color-trust-blue)" }} />
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "var(--color-success-green)" }} />
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "var(--color-success-green)" }} />
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "var(--color-success-green)" }} />
                   </div>
-                  <span className="font-medium italic" style={{ color: "var(--color-trust-blue)" }}>
+                  <span className="font-medium" style={{ color: "var(--color-success-green)" }}>
                     AI 已完成需求解析
                   </span>
                 </div>
-                <div className="space-y-3 opacity-60">
-                  <div className="h-4 bg-white rounded-full w-3/4" />
-                  <div className="h-4 bg-white rounded-full w-1/2" />
-                  <div className="h-4 bg-white rounded-full w-2/3" />
+                <div className="space-y-2 text-sm text-gray-600">
+                  <p><span className="font-semibold text-gray-800">目的地：</span>{requirement.destination}</p>
+                  <p><span className="font-semibold text-gray-800">出行日期：</span>{formatDate(requirement.start_date)} - {formatDate(requirement.end_date)}</p>
+                  <p><span className="font-semibold text-gray-800">出行人数：</span>{requirement.adults}位成人{requirement.children > 0 && ` + ${requirement.children}位儿童`}</p>
+                  <p><span className="font-semibold text-gray-800">预算：</span>{formatYuan(requirement.budget_cents)}</p>
+                  {requirement.preferences.length > 0 && (
+                    <p><span className="font-semibold text-gray-800">偏好：</span>{requirement.preferences.join("、")}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -178,40 +200,48 @@ function ConfirmContent() {
                   </div>
                 )}
 
-                {/* Details grid */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">目的地</p>
-                    <Badge
-                      className="text-white text-sm font-bold"
-                      style={{ backgroundColor: "var(--color-trust-blue)" }}
-                    >
-                      <MapPin className="size-3 mr-1" />
-                      {requirement.destination}
-                    </Badge>
+                {/* Details */}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">目的地</p>
+                      <Badge
+                        className="text-white text-sm font-bold"
+                        style={{ backgroundColor: "var(--color-trust-blue)" }}
+                      >
+                        <MapPin className="size-3 mr-1" />
+                        {requirement.destination}
+                      </Badge>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">出行人数</p>
+                      <div className="flex items-center text-sm font-bold text-gray-700">
+                        <Users className="size-4 mr-1" />
+                        {requirement.adults}位成人
+                        {requirement.children > 0 && ` + ${requirement.children}位儿童`}
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">日期</p>
-                    <Badge
-                      className="text-white text-sm font-bold"
-                      style={{ backgroundColor: "var(--color-trust-blue)" }}
-                    >
-                      <Calendar className="size-3 mr-1" />
-                      {formatDate(requirement.start_date)} - {formatDate(requirement.end_date)}
-                    </Badge>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">时长</p>
-                    <p className="text-sm font-bold text-gray-700">
-                      {Math.round((new Date(requirement.end_date).getTime() - new Date(requirement.start_date).getTime()) / 86400000)}天
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">出行人数</p>
-                    <div className="flex items-center text-sm font-bold text-gray-700">
-                      <Users className="size-4 mr-1" />
-                      {requirement.adults}位成人
-                      {requirement.children > 0 && ` + ${requirement.children}位儿童`}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">出发</p>
+                      <div className="flex items-center text-sm font-bold text-gray-700">
+                        <Calendar className="size-4 mr-1 shrink-0" style={{ color: "var(--color-trust-blue)" }} />
+                        {formatDate(requirement.start_date)}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">返回</p>
+                      <div className="flex items-center text-sm font-bold text-gray-700">
+                        <Calendar className="size-4 mr-1 shrink-0" style={{ color: "var(--color-trust-blue)" }} />
+                        {formatDate(requirement.end_date)}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">时长</p>
+                      <p className="text-sm font-bold text-gray-700">
+                        {Math.round((new Date(requirement.end_date).getTime() - new Date(requirement.start_date).getTime()) / 86400000)}天
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -261,7 +291,7 @@ function ConfirmContent() {
                 >
                   <ShieldCheck className="size-5 shrink-0" style={{ color: "var(--color-success-green)" }} />
                   <p className="text-[11px] font-medium leading-tight" style={{ color: "var(--color-success-green)" }}>
-                    已激活：随心退服务。如未成行，服务费全额返还。
+                    已激活：退改权益服务。具体退款规则请参见<a href="/refund-policy" className="underline">退款权益说明</a>。
                   </p>
                 </div>
 
@@ -269,7 +299,7 @@ function ConfirmContent() {
                 <div className="flex items-start gap-2 pt-2">
                   <Info className="size-4 text-gray-300 mt-0.5 shrink-0" />
                   <p className="text-[10px] text-gray-400 leading-relaxed">
-                    该预算已包含基础行程费用及无忧退款服务费。高峰期价格可能略有上浮，具体以最终供应商竞价为准。
+                    该预算已包含基础行程费用及退改权益服务费。高峰期价格可能略有上浮，具体以最终供应商竞价为准。
                   </p>
                 </div>
 

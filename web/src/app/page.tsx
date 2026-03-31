@@ -2,27 +2,25 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, Eye, EyeOff, ArrowRight, Lock, Info } from "lucide-react"
+import { Loader2, ArrowRight, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { TrustHero } from "@/components/TrustHero"
 import { api } from "@/lib/api"
-import { setSessionData } from "@/lib/session-store"
+import { setSessionData, setPersistedSessionId } from "@/lib/session-store"
 
 export default function HomePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [showIdNumber, setShowIdNumber] = useState(false)
 
   const [form, setForm] = useState({
-    name: "",
-    id_number: "",
-    phone: "",
     adults: 1,
     children: 0,
+    start_date: "",
+    end_date: "",
     description: "",
   })
 
@@ -36,22 +34,26 @@ export default function HomePage() {
     setLoading(true)
 
     try {
-      const identity = await api.createIdentity({
-        name: form.name,
-        id_number: form.id_number,
-        phone: form.phone,
+      const session = await api.createSession({
         adults: form.adults,
         children: form.children,
       })
 
-      setSessionData("session_id", identity.session_id)
+      setPersistedSessionId(session.session_id)
 
-      const parsed = await api.parse(identity.session_id, form.description)
+      const parsed = await api.parse(session.session_id, form.description)
 
-      setSessionData("requirement", parsed.requirement)
+      const requirement = {
+        ...parsed.requirement,
+        start_date: form.start_date,
+        end_date: form.end_date,
+        adults: form.adults,
+        children: form.children,
+      }
+      setSessionData("requirement", requirement)
       setSessionData("validation", parsed.validation)
 
-      router.push(`/confirm?session_id=${identity.session_id}`)
+      router.push(`/confirm?session_id=${session.session_id}`)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "请求失败，请重试"
       setError(message)
@@ -74,68 +76,11 @@ export default function HomePage() {
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden sticky top-24">
               <div className="p-8">
                 <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-2xl font-bold font-display">出行人信息</h2>
+                  <h2 className="text-2xl font-bold font-display">描述您的旅行需求</h2>
                 </div>
 
                 <fieldset disabled={loading} className="contents">
                   <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Name */}
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="text-sm font-semibold text-gray-700">
-                        姓名
-                      </Label>
-                      <Input
-                        id="name"
-                        required
-                        value={form.name}
-                        onChange={(e) => updateField("name", e.target.value)}
-                        placeholder="与证件姓名一致"
-                        className="h-12 bg-gray-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                      />
-                    </div>
-
-                    {/* ID Number */}
-                    <div className="space-y-2">
-                      <Label htmlFor="id_number" className="text-sm font-semibold text-gray-700">
-                        身份证号
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          id="id_number"
-                          required
-                          type={showIdNumber ? "text" : "password"}
-                          value={form.id_number}
-                          onChange={(e) => updateField("id_number", e.target.value)}
-                          placeholder="请输入18位身份证号"
-                          className="h-12 bg-gray-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-600 focus:border-transparent pr-10"
-                        />
-                        <button
-                          type="button"
-                          aria-label={showIdNumber ? "隐藏身份证号" : "显示身份证号"}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                          onClick={() => setShowIdNumber((prev) => !prev)}
-                        >
-                          {showIdNumber ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Phone */}
-                    <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">
-                        手机号
-                      </Label>
-                      <Input
-                        id="phone"
-                        required
-                        type="tel"
-                        value={form.phone}
-                        onChange={(e) => updateField("phone", e.target.value)}
-                        placeholder="接收预订短信"
-                        className="h-12 bg-gray-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-600 focus:border-transparent"
-                      />
-                    </div>
-
                     {/* Travelers */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -184,6 +129,34 @@ export default function HomePage() {
                       </div>
                     </div>
 
+                    {/* Dates */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="start_date" className="text-sm font-semibold text-gray-700">出发日期</Label>
+                        <Input
+                          id="start_date"
+                          type="date"
+                          required
+                          value={form.start_date}
+                          onChange={(e) => updateField("start_date", e.target.value)}
+                          min={new Date().toISOString().split("T")[0]}
+                          className="h-12 bg-gray-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="end_date" className="text-sm font-semibold text-gray-700">返回日期</Label>
+                        <Input
+                          id="end_date"
+                          type="date"
+                          required
+                          value={form.end_date}
+                          onChange={(e) => updateField("end_date", e.target.value)}
+                          min={form.start_date || new Date().toISOString().split("T")[0]}
+                          className="h-12 bg-gray-50 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                        />
+                      </div>
+                    </div>
+
                     {/* Description */}
                     <div className="space-y-2">
                       <Label htmlFor="description" className="text-sm font-semibold text-gray-700">
@@ -204,8 +177,8 @@ export default function HomePage() {
                     <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl">
                       <Info className="size-4 text-gray-400 mt-0.5 shrink-0" />
                       <p className="text-xs text-gray-500 leading-relaxed">
-                        信息将在72小时后自动删除，采用AES-256加密技术保障。点击下方按钮即表示您同意我们的
-                        <a href="#" className="underline" style={{ color: "var(--color-trust-blue)" }}>退款权益说明</a>
+                        本页面不收集任何个人身份信息。点击下方按钮即表示您同意我们的
+                        <a href="#" className="underline" style={{ color: "var(--color-trust-blue)" }}>服务条款</a>
                         及隐私政策。
                       </p>
                     </div>

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -75,8 +76,13 @@ func (h *Handler) Start(c *gin.Context) {
 		return
 	}
 
-	// Calculate duration
-	days := 5 // default, will be computed from dates in production
+	// Calculate duration from actual dates
+	startTime, _ := time.Parse("2006-01-02", startDate)
+	endTime, _ := time.Parse("2006-01-02", endDate)
+	days := int(endTime.Sub(startTime).Hours() / 24)
+	if days < 1 {
+		days = 1
+	}
 
 	// Fetch quotes from supplier
 	quotes, err := h.supplier.FetchQuotes(dest, days, budgetCents, adults, children)

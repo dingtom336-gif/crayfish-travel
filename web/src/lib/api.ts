@@ -129,6 +129,18 @@ export interface Order {
   created_at: string
 }
 
+export interface SessionResponse {
+  session_id: string
+  destination: string
+  start_date: string
+  end_date: string
+  budget_cents: number
+  adults: number
+  children: number
+  preferences: string[]
+  status: string
+}
+
 export const api = {
   createIdentity(data: {
     name: string
@@ -141,6 +153,17 @@ export const api = {
       method: "POST",
       body: JSON.stringify(data),
     })
+  },
+
+  createSession(data: { adults: number; children: number }) {
+    return request<{ session_id: string }>("/sessions", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
+  },
+
+  getSession(session_id: string) {
+    return request<SessionResponse>(`/sessions/${encodeURIComponent(session_id)}`)
   },
 
   parse(session_id: string, raw_input: string) {

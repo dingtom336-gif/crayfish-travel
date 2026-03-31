@@ -100,6 +100,7 @@ func (m *MockSupplierCN) FetchQuotes(destination string, days int, budgetCents i
 	for i, pkg := range mockPackagesCN {
 		priceMultiplier := 0.8 + rand.Float64()*0.4
 		basePrice := int64(float64(budgetCents) * priceMultiplier)
+		commission := basePrice * 5 / 100
 		totalPrice := basePrice + refundGuaranteeFee
 
 		quotes[i] = Quote{
@@ -110,6 +111,7 @@ func (m *MockSupplierCN) FetchQuotes(destination string, days int, budgetCents i
 			DurationNights:          nights,
 			BasePriceCents:          basePrice,
 			RefundGuaranteeFeeCents: refundGuaranteeFee,
+			CommissionCents:         commission,
 			TotalPriceCents:         totalPrice,
 			StarRating:              pkg.starRating,
 			ReviewCount:             50 + rand.Intn(200),

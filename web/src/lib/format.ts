@@ -6,11 +6,13 @@ export function formatYuan(cents: number): string {
   return `${formatted}元`
 }
 
-export function formatDate(dateStr: string): string {
+export function formatDate(dateStr: string, showYear = false): string {
   const date = new Date(dateStr)
+  const now = new Date()
+  const sameYear = date.getFullYear() === now.getFullYear()
   return date.toLocaleDateString("zh-CN", {
-    year: "numeric",
-    month: "long",
+    year: (!sameYear || showYear) ? "numeric" : undefined,
+    month: "short",
     day: "numeric",
     weekday: "short",
   })

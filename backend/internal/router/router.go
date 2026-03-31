@@ -28,14 +28,14 @@ type Handlers struct {
 }
 
 // Setup configures all routes and middleware.
-func Setup(mode string, h *Handlers) *gin.Engine {
+func Setup(mode string, h *Handlers, allowedOrigins []string, adminToken string) *gin.Engine {
 	gin.SetMode(mode)
 	r := gin.New()
 
 	// Global middleware
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
-	r.Use(middleware.CORS())
+	r.Use(middleware.CORS(allowedOrigins))
 	r.Use(middleware.TraceID())
 	r.Use(middleware.Metrics())
 
@@ -105,8 +105,9 @@ func Setup(mode string, h *Handlers) *gin.Engine {
 			riskcontrolGroup.GET("/pool/status", h.RiskControl.PoolStatus)
 		}
 
-		// Admin (dev only)
+		// Admin (dev only, requires token)
 		admin := v1.Group("/admin")
+		admin.Use(middleware.AdminAuth(adminToken))
 		{
 			admin.POST("/fund-pool/seed", h.RiskControl.Seed)
 		}

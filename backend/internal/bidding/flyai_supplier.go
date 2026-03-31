@@ -215,6 +215,7 @@ func combinePackages(hotels []flyaiHotel, flights []flyaiFlight, destination str
 		hotelPricePerNight := parsePrice(h.Price)
 		hotelTotalCents := hotelPricePerNight * int64(nights)
 		basePriceCents := hotelTotalCents + flightTotalCents
+		commission := basePriceCents * 5 / 100
 		totalPriceCents := basePriceCents + refundGuaranteeFee
 
 		// Build flight info string
@@ -256,6 +257,7 @@ func combinePackages(hotels []flyaiHotel, flights []flyaiFlight, destination str
 			DurationNights:          nights,
 			BasePriceCents:          basePriceCents,
 			RefundGuaranteeFeeCents: refundGuaranteeFee,
+			CommissionCents:         commission,
 			TotalPriceCents:         totalPriceCents,
 			StarRating:              score,
 			ReviewCount:             50 + rand.Intn(200),

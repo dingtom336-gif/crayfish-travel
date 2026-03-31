@@ -11,6 +11,7 @@ import { formatYuan, LOCK_DURATION_SECONDS } from "@/lib/format"
 import { CountdownTimer } from "@/components/CountdownTimer"
 // StepProgress is used elsewhere with 3 steps; payment uses a simple inline indicator
 import { CardSkeleton, EmptyState } from "@/components/Skeleton"
+import { QRCodeSVG } from "qrcode.react"
 
 function PaymentContent() {
   const searchParams = useSearchParams()
@@ -84,6 +85,21 @@ function PaymentContent() {
     }
   }, [payment])
 
+  // Auto-poll for payment completion
+  useEffect(() => {
+    if (!payment || !sessionId) return
+    const interval = setInterval(async () => {
+      try {
+        const result = await api.listOrders(sessionId)
+        if (result && result.length > 0) {
+          clearInterval(interval)
+          router.push(`/orders?session_id=${sessionId}`)
+        }
+      } catch { /* ignore polling errors */ }
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [payment, sessionId, router])
+
   if (!sessionId || !quoteId) {
     return (
       <main className="min-h-screen bg-[#f9f9ff]">
@@ -150,15 +166,8 @@ function PaymentContent() {
                     {loading && <CardSkeleton />}
 
                     {!loading && payment && method === "qr" && (
-                      <div className="relative rounded-xl border-2 border-dashed border-muted-foreground/20 bg-muted/30 p-6">
-                        <div className="flex h-60 w-60 items-center justify-center">
-                          <div className="text-center">
-                            <p className="text-xs text-muted-foreground">支付二维码</p>
-                            <p className="mt-2 break-all font-mono text-xs text-[var(--color-trust-blue)]">
-                              {payment.qr_code_url}
-                            </p>
-                          </div>
-                        </div>
+                      <div className="relative rounded-xl border-2 border-dashed border-muted-foreground/20 bg-white p-6">
+                        <QRCodeSVG value={payment.qr_code_url} size={240} level="M" />
                       </div>
                     )}
 
@@ -348,13 +357,7 @@ function PaymentContent() {
               {!loading && payment && method === "qr" && (
                 <>
                   <div className="rounded-2xl bg-white p-4 shadow-xl">
-                    <div className="flex h-48 w-48 items-center justify-center rounded-lg border-4 border-white bg-muted/30">
-                      <div className="text-center">
-                        <p className="break-all font-mono text-xs text-[var(--color-trust-blue)]">
-                          {payment.qr_code_url}
-                        </p>
-                      </div>
-                    </div>
+                    <QRCodeSVG value={payment.qr_code_url} size={192} level="M" />
                   </div>
                   <div className="space-y-2 text-center">
                     <p className="font-medium">使用支付宝或微信扫码</p>
