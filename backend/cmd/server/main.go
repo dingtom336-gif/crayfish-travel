@@ -53,8 +53,8 @@ func main() {
 	dateValidator := nlp.NewDateValidator(lunarSvc)
 	nlpHandler := nlp.NewHandler(db, claudeClient, dateValidator)
 
-	// Bidding module
-	supplier := bidding.NewMockSupplier()
+	// Bidding module (FlyAI real data with Chinese mock fallback)
+	supplier := bidding.NewFlyAISupplier()
 	biddingHandler := bidding.NewHandler(db, supplier)
 
 	// Redis

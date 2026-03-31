@@ -38,37 +38,54 @@ interface PackageCardProps {
 
 function PackageCard({ pkg, onSelect, isLocking }: PackageCardProps) {
   return (
-    <Card className="relative flex flex-col">
-      {pkg.is_best_value && (
-        <div className="absolute top-3 right-3">
+    <Card className="relative flex flex-col overflow-hidden">
+      {pkg.image_url && (
+        <div className="relative h-48 w-full bg-gray-100">
+          <img
+            src={pkg.image_url}
+            alt={pkg.package_title}
+            className="h-full w-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+          />
+          {pkg.is_best_value && (
+            <Badge className="absolute top-3 left-3 bg-[#34a853] text-white shadow">超值首选</Badge>
+          )}
+          <Badge className="absolute top-3 right-3 bg-white/90 text-[#1a73e8] shadow">{pkg.supplier} 已认证</Badge>
+        </div>
+      )}
+      {!pkg.image_url && pkg.is_best_value && (
+        <div className="absolute top-3 right-3 z-10">
           <Badge className="bg-[#34a853] text-white">超值首选</Badge>
         </div>
       )}
-      <CardHeader>
-        <CardTitle className="text-lg font-bold">{pkg.package_title}</CardTitle>
-        <div className="flex items-center gap-2 pt-1">
-          <Badge variant="outline" className="border-[#1a73e8] text-[#1a73e8]">
-            {pkg.supplier} 已认证
-          </Badge>
-        </div>
+      <CardHeader className={pkg.image_url ? "pt-3" : ""}>
+        <CardTitle className="text-lg font-bold leading-snug">{pkg.package_title}</CardTitle>
+        {!pkg.image_url && (
+          <div className="flex items-center gap-2 pt-1">
+            <Badge variant="outline" className="border-[#1a73e8] text-[#1a73e8]">
+              {pkg.supplier} 已认证
+            </Badge>
+          </div>
+        )}
         <StarRating rating={pkg.star_rating} reviewCount={pkg.review_count} />
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-3">
-        <ul className="space-y-1 text-sm text-muted-foreground">
+        <div className="flex flex-wrap gap-1.5">
           {pkg.highlights.slice(0, 3).map((h, i) => (
-            <li key={i} className="flex items-start gap-2">
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#1a73e8]" />
+            <Badge key={h || i} variant="secondary" className="text-xs font-normal">
               {h}
-            </li>
+            </Badge>
           ))}
-        </ul>
+        </div>
         <Separator />
-        <div className="space-y-1">
-          <div className="text-2xl font-bold text-[#1a73e8]">
-            {formatYuan(pkg.total_price_cents)}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            基础价格 {formatYuan(pkg.base_price_cents)} + 退改保障费 {formatYuan(pkg.refund_guarantee_fee_cents)}
+        <div className="flex items-end justify-between">
+          <div>
+            <div className="text-2xl font-bold text-[#1a73e8]">
+              {formatYuan(pkg.total_price_cents)}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              基础 {formatYuan(pkg.base_price_cents)} + 退改保障 {formatYuan(pkg.refund_guarantee_fee_cents)}
+            </div>
           </div>
         </div>
       </CardContent>
