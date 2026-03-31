@@ -76,9 +76,21 @@ func (h *Handler) Start(c *gin.Context) {
 		return
 	}
 
-	// Calculate duration from actual dates
-	startTime, _ := time.Parse("2006-01-02", startDate)
-	endTime, _ := time.Parse("2006-01-02", endDate)
+	// Validate and parse dates
+	if startDate == "" || endDate == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing start_date or end_date, please confirm requirements first"})
+		return
+	}
+	startTime, err := time.Parse("2006-01-02", startDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid start_date format"})
+		return
+	}
+	endTime, err := time.Parse("2006-01-02", endDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid end_date format"})
+		return
+	}
 	days := int(endTime.Sub(startTime).Hours() / 24)
 	if days < 1 {
 		days = 1

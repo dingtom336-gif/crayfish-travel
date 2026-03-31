@@ -170,8 +170,8 @@ function ConfirmContent() {
                   <p><span className="font-semibold text-gray-800">出行日期：</span>{formatDate(requirement.start_date)} - {formatDate(requirement.end_date)}</p>
                   <p><span className="font-semibold text-gray-800">出行人数：</span>{requirement.adults}位成人{requirement.children > 0 && ` + ${requirement.children}位儿童`}</p>
                   <p><span className="font-semibold text-gray-800">预算：</span>{formatYuan(requirement.budget_cents)}</p>
-                  {requirement.preferences.length > 0 && (
-                    <p><span className="font-semibold text-gray-800">偏好：</span>{requirement.preferences.join("、")}</p>
+                  {(requirement.preferences ?? []).length > 0 && (
+                    <p><span className="font-semibold text-gray-800">偏好：</span>{(requirement.preferences ?? []).join("、")}</p>
                   )}
                 </div>
               </div>
@@ -240,18 +240,25 @@ function ConfirmContent() {
                     <div className="space-y-1">
                       <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">时长</p>
                       <p className="text-sm font-bold text-gray-700">
-                        {Math.round((new Date(requirement.end_date).getTime() - new Date(requirement.start_date).getTime()) / 86400000)}天
+                        {(() => {
+                          if (!requirement.start_date || !requirement.end_date) return "-"
+                          const start = new Date(requirement.start_date).getTime()
+                          const end = new Date(requirement.end_date).getTime()
+                          if (isNaN(start) || isNaN(end)) return "-"
+                          const days = Math.round((end - start) / 86400000)
+                          return days > 0 ? `${days}天` : "-"
+                        })()}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 {/* Preferences */}
-                {requirement.preferences.length > 0 && (
+                {(requirement.preferences ?? []).length > 0 && (
                   <div className="space-y-2">
                     <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">偏好设置</p>
                     <div className="flex flex-wrap gap-2">
-                      {requirement.preferences.map((pref) => (
+                      {(requirement.preferences ?? []).map((pref) => (
                         <span
                           key={pref}
                           className="px-3 py-1 rounded-lg text-xs font-bold border"
@@ -276,9 +283,14 @@ function ConfirmContent() {
                       className="text-2xl font-extrabold tracking-tight"
                       style={{ color: "var(--color-vibrant-orange)" }}
                     >
-                      {formatYuan(requirement.budget_cents)}
+                      {requirement.budget_cents > 0 ? formatYuan(requirement.budget_cents) : "由供应商竞价"}
                     </span>
                   </div>
+                  {requirement.budget_cents === 0 && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      未指定预算，系统将根据行程推荐最优方案
+                    </p>
+                  )}
                 </div>
 
                 {/* Refund guarantee */}

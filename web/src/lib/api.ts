@@ -210,8 +210,10 @@ export const api = {
     })
   },
 
-  listOrders(session_id: string) {
-    return request<Order[]>(`/orders?session_id=${encodeURIComponent(session_id)}`)
+  async listOrders(session_id: string): Promise<Order[]> {
+    // Backend wraps orders in { orders: [...] } envelope
+    const result = await request<{ orders: Order[] }>(`/orders?session_id=${encodeURIComponent(session_id)}`)
+    return result.orders ?? []
   },
 
   requestRefund(order_id: string) {

@@ -186,6 +186,12 @@ func (h *Handler) Confirm(c *gin.Context) {
 		return
 	}
 
+	// Validate required date fields
+	if req.StartDate == "" || req.EndDate == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "请填写出发日期和返回日期"})
+		return
+	}
+
 	// Validate dates for peak season
 	validation, err := h.validator.Validate(req.StartDate, req.EndDate)
 	if err != nil {
@@ -194,7 +200,12 @@ func (h *Handler) Confirm(c *gin.Context) {
 	}
 
 	// Update session with confirmed requirements
-	prefsJSON, _ := json.Marshal(req.Preferences)
+	// Ensure preferences is never null in JSON output
+	prefs := req.Preferences
+	if prefs == nil {
+		prefs = []string{}
+	}
+	prefsJSON, _ := json.Marshal(prefs)
 	_, err = h.db.Exec(`
 		UPDATE sessions SET
 			destination = $1, start_date = $2, end_date = $3,

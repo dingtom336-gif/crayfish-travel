@@ -67,7 +67,7 @@ function PackageCard({ pkg, onSelect, isLocking }: PackageCardProps) {
         </div>
 
         <div className="mb-6 flex flex-wrap gap-2">
-          {pkg.highlights.slice(0, 3).map((h, i) => (
+          {(pkg.highlights ?? []).slice(0, 3).map((h, i) => (
             <span
               key={h || i}
               className={`rounded px-2 py-1 text-[11px] font-bold uppercase tracking-wider ${HIGHLIGHT_COLORS[i % HIGHLIGHT_COLORS.length]}`}

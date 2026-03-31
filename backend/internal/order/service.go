@@ -94,15 +94,22 @@ func (s *OrderService) CreateOrder(ctx context.Context, sessionID, paymentID, qu
 		WHERE session_id = $1 ORDER BY created_at DESC LIMIT 1`,
 		sessionID,
 	).Scan(&nameEnc, &phoneEnc)
-	if err != nil && err != sql.ErrNoRows {
+	if err == sql.ErrNoRows {
+		contactName = "Guest"
+		contactPhone = ""
+	} else if err != nil {
 		return nil, fmt.Errorf("fetch contact info: %w", err)
-	}
-	if err == nil && s.decryptor != nil {
-		if n, decErr := s.decryptor.OpenStringWithNonce(nameEnc); decErr == nil {
-			contactName = n
+	} else {
+		// Decrypt only if we have data
+		if len(nameEnc) > 0 && s.decryptor != nil {
+			if n, decErr := s.decryptor.OpenStringWithNonce(nameEnc); decErr == nil {
+				contactName = n
+			}
 		}
-		if p, decErr := s.decryptor.OpenStringWithNonce(phoneEnc); decErr == nil {
-			contactPhone = p
+		if len(phoneEnc) > 0 && s.decryptor != nil {
+			if p, decErr := s.decryptor.OpenStringWithNonce(phoneEnc); decErr == nil {
+				contactPhone = p
+			}
 		}
 	}
 

@@ -32,6 +32,16 @@ export default function HomePage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError("")
+
+    if (!form.start_date || !form.end_date) {
+      setError("请选择出发日期和返回日期")
+      return
+    }
+    if (!form.description.trim()) {
+      setError("请描述您的出行需求")
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -132,45 +142,61 @@ export default function HomePage() {
 
                     {/* Dates - Stitch pill-shaped design */}
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="relative group">
-                        <Label htmlFor="start_date" className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">出发日期</Label>
-                        <div className="relative">
-                          <div className="flex items-center gap-3 bg-gray-50 px-4 py-3.5 rounded-full border border-gray-100 shadow-sm group-focus-within:border-blue-300 group-focus-within:bg-white transition-all cursor-pointer">
-                            <Calendar className="size-5 shrink-0 opacity-70" style={{ color: "var(--color-trust-blue)" }} />
-                            <span className={`font-medium text-sm ${form.start_date ? "text-gray-900" : "text-gray-400"}`}>
+                      <div>
+                        <Label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">出发日期</Label>
+                        <button
+                          type="button"
+                          onClick={() => (document.getElementById("start_date_input") as HTMLInputElement)?.showPicker()}
+                          className="w-full flex items-center gap-3 bg-gray-50 hover:bg-gray-100 px-4 py-3.5 rounded-xl border border-gray-200 shadow-sm transition-all cursor-pointer text-left"
+                        >
+                          <div className="flex items-center justify-center w-9 h-9 rounded-lg" style={{ backgroundColor: "rgba(26, 115, 232, 0.1)" }}>
+                            <Calendar className="size-4" style={{ color: "var(--color-trust-blue)" }} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">出发</div>
+                            <div className={`text-sm font-bold truncate ${form.start_date ? "text-gray-900" : "text-gray-300"}`}>
                               {form.start_date ? formatDate(form.start_date) : "选择日期"}
-                            </span>
+                            </div>
                           </div>
-                          <input
-                            id="start_date"
-                            type="date"
-                            required
-                            value={form.start_date}
-                            onChange={(e) => updateField("start_date", e.target.value)}
-                            min={new Date().toISOString().split("T")[0]}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          />
-                        </div>
+                        </button>
+                        <input
+                          id="start_date_input"
+                          type="date"
+                          tabIndex={-1}
+                          value={form.start_date}
+                          onChange={(e) => updateField("start_date", e.target.value)}
+                          min={new Date().toISOString().split("T")[0]}
+                          className="sr-only"
+                          aria-hidden="true"
+                        />
                       </div>
-                      <div className="relative group">
-                        <Label htmlFor="end_date" className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">返回日期</Label>
-                        <div className="relative">
-                          <div className="flex items-center gap-3 bg-gray-50 px-4 py-3.5 rounded-full border border-gray-100 shadow-sm group-focus-within:border-blue-300 group-focus-within:bg-white transition-all cursor-pointer">
-                            <Calendar className="size-5 shrink-0 opacity-70" style={{ color: "var(--color-trust-blue)" }} />
-                            <span className={`font-medium text-sm ${form.end_date ? "text-gray-900" : "text-gray-400"}`}>
-                              {form.end_date ? formatDate(form.end_date) : "选择日期"}
-                            </span>
+                      <div>
+                        <Label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">返回日期</Label>
+                        <button
+                          type="button"
+                          onClick={() => (document.getElementById("end_date_input") as HTMLInputElement)?.showPicker()}
+                          className="w-full flex items-center gap-3 bg-gray-50 hover:bg-gray-100 px-4 py-3.5 rounded-xl border border-gray-200 shadow-sm transition-all cursor-pointer text-left"
+                        >
+                          <div className="flex items-center justify-center w-9 h-9 rounded-lg" style={{ backgroundColor: "rgba(26, 115, 232, 0.1)" }}>
+                            <Calendar className="size-4" style={{ color: "var(--color-trust-blue)" }} />
                           </div>
-                          <input
-                            id="end_date"
-                            type="date"
-                            required
-                            value={form.end_date}
-                            onChange={(e) => updateField("end_date", e.target.value)}
-                            min={form.start_date || new Date().toISOString().split("T")[0]}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          />
-                        </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">返回</div>
+                            <div className={`text-sm font-bold truncate ${form.end_date ? "text-gray-900" : "text-gray-300"}`}>
+                              {form.end_date ? formatDate(form.end_date) : "选择日期"}
+                            </div>
+                          </div>
+                        </button>
+                        <input
+                          id="end_date_input"
+                          type="date"
+                          tabIndex={-1}
+                          value={form.end_date}
+                          onChange={(e) => updateField("end_date", e.target.value)}
+                          min={form.start_date || new Date().toISOString().split("T")[0]}
+                          className="sr-only"
+                          aria-hidden="true"
+                        />
                       </div>
                     </div>
 
