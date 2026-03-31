@@ -54,6 +54,26 @@ func (fp *FundPool) Freeze(sessionID uuid.UUID, amountCents int64, traceID strin
 	return tx.Commit()
 }
 
+// Deposit adds funds to the pool (admin operation).
+func (fp *FundPool) Deposit(amountCents int64, traceID string) error {
+	var totalCents int64
+	balance, err := fp.GetBalance()
+	if err == nil {
+		totalCents = balance.TotalCents
+	}
+	newBalance := totalCents + amountCents
+
+	_, err = fp.db.Exec(`
+		INSERT INTO fund_pool_ledger (trace_id, operation, amount_cents, balance_after_cents, description)
+		VALUES ($1, 'DEPOSIT', $2, $3, 'Admin seed deposit')`,
+		traceID, amountCents, newBalance,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to deposit: %w", err)
+	}
+	return nil
+}
+
 // Unfreeze releases previously frozen funds back to available.
 func (fp *FundPool) Unfreeze(sessionID uuid.UUID, traceID string) error {
 	tx, err := fp.db.Begin()

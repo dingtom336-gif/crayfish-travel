@@ -104,6 +104,12 @@ func Setup(mode string, h *Handlers) *gin.Engine {
 		{
 			riskcontrolGroup.GET("/pool/status", h.RiskControl.PoolStatus)
 		}
+
+		// Admin (dev only)
+		admin := v1.Group("/admin")
+		{
+			admin.POST("/fund-pool/seed", h.RiskControl.Seed)
+		}
 	}
 
 	return r

@@ -25,7 +25,7 @@ export function CountdownTimer({ expiresAt }: CountdownTimerProps) {
   const seconds = remaining % 60
 
   return (
-    <span className="inline-flex items-center rounded-full bg-[#ff6d3f] px-3 py-1 text-sm font-semibold text-white">
+    <span className="inline-flex items-center rounded-full bg-[var(--color-vibrant-orange)] px-3 py-1 text-sm font-semibold text-white">
       {minutes.toString().padStart(2, "0")}:{seconds.toString().padStart(2, "0")}
     </span>
   )

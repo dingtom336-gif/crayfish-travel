@@ -96,7 +96,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
       {onRetry && (
         <button
           onClick={onRetry}
-          className="mt-4 rounded-lg bg-[#1a73e8] px-4 py-2 text-sm font-medium text-white hover:bg-[#1565c0]"
+          className="mt-4 rounded-lg bg-[var(--color-trust-blue)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-trust-blue-dark)]"
         >
           重试
         </button>

@@ -1,20 +1,26 @@
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Plus_Jakarta_Sans, Inter } from "next/font/google"
 import "./globals.css"
+import { Navbar } from "@/components/Navbar"
+import { Footer } from "@/components/Footer"
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const plusJakarta = Plus_Jakarta_Sans({
+  variable: "--font-display",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
 })
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-body",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 })
 
 export const metadata: Metadata = {
-  title: "Crayfish Travel",
-  description: "反向撮合旅行平台 - 让供应商为你竞价",
+  title: "小龙虾旅行 - 反向撮合旅行平台",
+  description: "描述你的理想旅程，让供应商为你竞价，获得最优惠的旅行方案",
 }
 
 export default function RootLayout({
@@ -25,15 +31,14 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${plusJakarta.variable} ${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        <nav className="border-b bg-white px-6 py-3">
-          <span className="text-lg font-bold" style={{ color: "#1a73e8" }}>
-            小龙虾旅行
-          </span>
-        </nav>
-        <main className="flex flex-1 flex-col">{children}</main>
+      <body className="min-h-full flex flex-col font-body">
+        <Navbar />
+        <div className="pt-16 flex-1 flex flex-col">
+          {children}
+        </div>
+        <Footer />
       </body>
     </html>
   )

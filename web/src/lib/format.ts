@@ -1,5 +1,9 @@
 export function formatYuan(cents: number): string {
-  return `\u00a5${(cents / 100).toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const yuan = cents / 100
+  const formatted = yuan % 1 === 0
+    ? yuan.toLocaleString("zh-CN")
+    : yuan.toLocaleString("zh-CN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  return `${formatted}元`
 }
 
 export function formatDate(dateStr: string): string {
