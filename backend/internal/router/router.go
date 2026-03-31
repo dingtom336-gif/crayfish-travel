@@ -10,7 +10,7 @@ import (
 	"github.com/xiaozhang/crayfish-travel/backend/internal/common/middleware"
 	"github.com/xiaozhang/crayfish-travel/backend/internal/identity"
 	"github.com/xiaozhang/crayfish-travel/backend/internal/lock"
-	"github.com/xiaozhang/crayfish-travel/backend/internal/nlp"
+	"github.com/xiaozhang/crayfish-travel/backend/internal/aiparser"
 	"github.com/xiaozhang/crayfish-travel/backend/internal/order"
 	"github.com/xiaozhang/crayfish-travel/backend/internal/payment"
 	"github.com/xiaozhang/crayfish-travel/backend/internal/riskcontrol"
@@ -19,7 +19,7 @@ import (
 // Handlers holds all module handlers for dependency injection.
 type Handlers struct {
 	Identity    *identity.Handler
-	NLP         *nlp.Handler
+	NLP         *aiparser.Handler
 	Bidding     *bidding.Handler
 	Lock        *lock.Handler
 	Payment     *payment.Handler

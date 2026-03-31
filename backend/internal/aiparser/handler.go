@@ -1,4 +1,4 @@
-package nlp
+package aiparser
 
 import (
 	"database/sql"
@@ -41,7 +41,7 @@ func (f *FallbackParser) Parse(rawInput string) (*TravelRequirement, error) {
 		return hResult, nil
 	}
 
-	return nil, fmt.Errorf("all parsers failed: ark error: %w; heuristic: no match", err)
+	return nil, fmt.Errorf("无法解析旅行需求，请描述更具体的目的地")
 }
 
 // Handler handles NLP-related HTTP requests.
@@ -97,7 +97,16 @@ func (h *Handler) Parse(c *gin.Context) {
 	// Parse with NLP parser (ARK + heuristic fallback)
 	requirement, err := h.parser.Parse(req.RawInput)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to parse requirements"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "无法识别您的旅行目的地，请描述更具体，例如：想去三亚玩5天",
+		})
+		return
+	}
+
+	if requirement.Destination == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "请告诉我们您想去哪里，例如：去三亚、去泰国",
+		})
 		return
 	}
 

@@ -57,14 +57,20 @@ func (m *MockSmsNotifier) SendOrderConfirmation(phone, orderNo, destination, dat
 	return nil
 }
 
+// PIIDecryptor decrypts sealed PII blobs (nonce-prefixed AES-256-GCM).
+type PIIDecryptor interface {
+	OpenStringWithNonce(sealed []byte) (string, error)
+}
+
 // OrderService handles order business logic.
 type OrderService struct {
-	db *sql.DB
+	db        *sql.DB
+	decryptor PIIDecryptor
 }
 
 // NewOrderService creates a new order service.
-func NewOrderService(db *sql.DB) *OrderService {
-	return &OrderService{db: db}
+func NewOrderService(db *sql.DB, decryptor PIIDecryptor) *OrderService {
+	return &OrderService{db: db, decryptor: decryptor}
 }
 
 // GenerateOrderNo creates a unique order number: "CO" + timestamp + 8 random chars.
@@ -80,28 +86,39 @@ func GenerateOrderNo() string {
 
 // CreateOrder creates an order from payment and quote data.
 func (s *OrderService) CreateOrder(ctx context.Context, sessionID, paymentID, quoteID uuid.UUID, traceID string) (*Order, error) {
-	// Pull contact info from identity_records
+	// Pull contact info from identity_records (PII is AES-256-GCM encrypted)
 	var contactName, contactPhone string
+	var nameEnc, phoneEnc []byte
 	err := s.db.QueryRowContext(ctx, `
-		SELECT name, phone FROM identity_records
+		SELECT name_encrypted, phone_encrypted FROM identity_records
 		WHERE session_id = $1 ORDER BY created_at DESC LIMIT 1`,
 		sessionID,
-	).Scan(&contactName, &contactPhone)
+	).Scan(&nameEnc, &phoneEnc)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, fmt.Errorf("fetch contact info: %w", err)
 	}
+	if err == nil && s.decryptor != nil {
+		if n, decErr := s.decryptor.OpenStringWithNonce(nameEnc); decErr == nil {
+			contactName = n
+		}
+		if p, decErr := s.decryptor.OpenStringWithNonce(phoneEnc); decErr == nil {
+			contactPhone = p
+		}
+	}
 
-	// Pull quote details
+	// Pull quote details (join sessions for start_date, end_date, adults, children
+	// which are not stored on supplier_quotes)
 	var packageTitle, destination, supplier string
 	var totalAmountCents, basePriceCents, refundGuaranteeFeeCents int64
 	var startDate, endDate time.Time
 	var adults, children int
 	err = s.db.QueryRowContext(ctx, `
-		SELECT package_title, destination, supplier,
-		       total_price_cents, base_price_cents, refund_guarantee_fee_cents,
-		       start_date, end_date, adults, children
-		FROM supplier_quotes
-		WHERE id = $1 AND session_id = $2`,
+		SELECT q.package_title, q.destination, q.supplier,
+		       q.total_price_cents, q.base_price_cents, q.refund_guarantee_fee_cents,
+		       s.start_date, s.end_date, s.adults, s.children
+		FROM supplier_quotes q
+		JOIN sessions s ON s.id = q.session_id
+		WHERE q.id = $1 AND q.session_id = $2`,
 		quoteID, sessionID,
 	).Scan(&packageTitle, &destination, &supplier,
 		&totalAmountCents, &basePriceCents, &refundGuaranteeFeeCents,

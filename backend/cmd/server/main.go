@@ -11,7 +11,7 @@ import (
 	redisclient "github.com/xiaozhang/crayfish-travel/backend/internal/common/redis"
 	"github.com/xiaozhang/crayfish-travel/backend/internal/identity"
 	"github.com/xiaozhang/crayfish-travel/backend/internal/lock"
-	"github.com/xiaozhang/crayfish-travel/backend/internal/nlp"
+	"github.com/xiaozhang/crayfish-travel/backend/internal/aiparser"
 	"github.com/xiaozhang/crayfish-travel/backend/internal/order"
 	"github.com/xiaozhang/crayfish-travel/backend/internal/payment"
 	"github.com/xiaozhang/crayfish-travel/backend/internal/riskcontrol"
@@ -45,15 +45,15 @@ func main() {
 	identityHandler := identity.NewHandler(db, encryptor)
 
 	// NLP module
-	lunarSvc, err := nlp.NewLunarService(2026, 2035)
+	lunarSvc, err := aiparser.NewLunarService(2026, 2035)
 	if err != nil {
 		log.Fatalf("failed to init lunar service: %v", err)
 	}
-	arkClient := nlp.NewARKClient(cfg.ARK.APIKey, cfg.ARK.BaseURL, cfg.ARK.Model, cfg.ARK.Temperature, cfg.ARK.MaxTokens, cfg.ARK.Timeout)
-	heuristicParser := nlp.NewHeuristicParser()
-	fallbackParser := nlp.NewFallbackParser(arkClient, heuristicParser)
-	dateValidator := nlp.NewDateValidator(lunarSvc)
-	nlpHandler := nlp.NewHandler(db, fallbackParser, dateValidator)
+	arkClient := aiparser.NewARKClient(cfg.ARK.APIKey, cfg.ARK.BaseURL, cfg.ARK.Model, cfg.ARK.Temperature, cfg.ARK.MaxTokens, cfg.ARK.Timeout)
+	heuristicParser := aiparser.NewHeuristicParser()
+	fallbackParser := aiparser.NewFallbackParser(arkClient, heuristicParser)
+	dateValidator := aiparser.NewDateValidator(lunarSvc)
+	nlpHandler := aiparser.NewHandler(db, fallbackParser, dateValidator)
 
 	// Bidding module (FlyAI real data with Chinese mock fallback)
 	supplier := bidding.NewFlyAISupplier()
@@ -90,7 +90,7 @@ func main() {
 
 	// Order module
 	smsNotifier := order.NewMockSmsNotifier()
-	orderService := order.NewOrderService(db)
+	orderService := order.NewOrderService(db, encryptor)
 	orderHandler := order.NewHandler(orderService, smsNotifier, refundProcessor)
 
 	// Wire callback -> auto order creation
