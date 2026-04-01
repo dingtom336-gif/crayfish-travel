@@ -71,6 +71,7 @@ func Setup(mode string, h *Handlers, allowedOrigins []string, adminToken string)
 		nlpGroup := v1.Group("/nlp")
 		{
 			nlpGroup.POST("/parse", h.NLP.Parse)
+			nlpGroup.POST("/parse/stream", h.NLP.ParseSSE)
 			nlpGroup.POST("/confirm", h.NLP.Confirm)
 		}
 
@@ -78,6 +79,7 @@ func Setup(mode string, h *Handlers, allowedOrigins []string, adminToken string)
 		biddingGroup := v1.Group("/bidding")
 		{
 			biddingGroup.POST("/start", h.Bidding.Start)
+			biddingGroup.POST("/start/stream", h.Bidding.StartSSE)
 			biddingGroup.GET("/:session_id/packages", h.Bidding.GetPackages)
 		}
 

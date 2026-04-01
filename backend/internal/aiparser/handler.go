@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -138,6 +139,85 @@ func (h *Handler) Parse(c *gin.Context) {
 		Validation:  validation,
 		TraceID:     traceID,
 	})
+}
+
+// ParseSSE streams parsing progress via Server-Sent Events.
+func (h *Handler) ParseSSE(c *gin.Context) {
+	var req ParseRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Set SSE headers
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
+	c.Writer.Flush()
+
+	sendEvent := func(event, data string) {
+		fmt.Fprintf(c.Writer, "event: %s\ndata: %s\n\n", event, data)
+		c.Writer.Flush()
+	}
+
+	// Step 1: parsing started
+	sendEvent("progress", `{"step":"parsing","message":"正在解析您的需求..."}`)
+
+	// Step 2: actual parse
+	requirement, err := h.parser.Parse(req.RawInput)
+	if err != nil {
+		sendEvent("error", `{"message":"无法识别您的旅行目的地，请描述更具体，例如：想去三亚玩5天"}`)
+		return
+	}
+
+	if requirement.Destination == "" {
+		sendEvent("error", `{"message":"请告诉我们您想去哪里，例如：去三亚、去泰国"}`)
+		return
+	}
+
+	sendEvent("progress", fmt.Sprintf(`{"step":"destination","message":"已识别目的地：%s"}`, requirement.Destination))
+
+	// Step 3: budget
+	if requirement.BudgetCents > 0 {
+		sendEvent("progress", fmt.Sprintf(`{"step":"budget","message":"预算：%d元"}`, requirement.BudgetCents/100))
+	} else {
+		sendEvent("progress", `{"step":"budget","message":"将为您智能推荐预算范围"}`)
+	}
+
+	// Step 4: preferences
+	if len(requirement.Preferences) > 0 {
+		sendEvent("progress", fmt.Sprintf(`{"step":"preferences","message":"偏好：%s"}`, strings.Join(requirement.Preferences, "、")))
+	}
+
+	// Step 5: date validation (if dates provided)
+	var validation *DateValidation
+	if requirement.StartDate != "" && requirement.EndDate != "" {
+		validation, err = h.validator.Validate(requirement.StartDate, requirement.EndDate)
+		if err != nil {
+			sendEvent("error", fmt.Sprintf(`{"message":"%s"}`, err.Error()))
+			return
+		}
+		if validation.IsPeakSeason {
+			sendEvent("progress", `{"step":"peak","message":"注意：高峰期价格可能上浮"}`)
+		}
+	} else {
+		validation = &DateValidation{IsValid: true}
+	}
+
+	// Step 6: update session
+	if req.SessionID != "" {
+		h.db.Exec(`UPDATE sessions SET raw_input = $1, updated_at = NOW() WHERE id = $2`, req.RawInput, req.SessionID)
+	}
+
+	// Step 7: send final result
+	resultJSON, _ := json.Marshal(ParseResponse{
+		SessionID:   req.SessionID,
+		Requirement: requirement,
+		Validation:  validation,
+		TraceID:     middleware.GetTraceID(c),
+	})
+	sendEvent("result", string(resultJSON))
+	sendEvent("done", `{}`)
 }
 
 // ConfirmRequest is the request body for confirming parsed requirements.

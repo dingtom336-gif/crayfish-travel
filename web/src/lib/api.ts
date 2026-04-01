@@ -168,6 +168,89 @@ export interface SessionResponse {
   status: string
 }
 
+// readSSE reads an SSE response stream and dispatches events to the handler.
+function readSSE<T>(
+  path: string,
+  body: unknown,
+  onProgress: (step: string, message: string) => void,
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => {
+      controller.abort()
+      reject(new Error("请求超时"))
+    }, 60000)
+
+    fetch(`${API_BASE}${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Trace-ID": generateTraceId(),
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    })
+      .then((res) => {
+        if (!res.ok) {
+          return res
+            .json()
+            .catch(() => ({}))
+            .then((b: Record<string, string>) => {
+              throw new Error(b.error || `请求失败: ${res.status}`)
+            })
+        }
+
+        const reader = res.body!.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ""
+
+        function read(): Promise<void> {
+          return reader.read().then(({ done, value }) => {
+            if (done) {
+              clearTimeout(timeout)
+              return
+            }
+            buffer += decoder.decode(value, { stream: true })
+            const lines = buffer.split("\n")
+            buffer = lines.pop() || ""
+            let currentEvent = ""
+
+            for (const line of lines) {
+              if (line.startsWith("event: ")) {
+                currentEvent = line.slice(7)
+              } else if (line.startsWith("data: ")) {
+                try {
+                  const data = JSON.parse(line.slice(6))
+                  if (currentEvent === "progress") {
+                    onProgress(data.step, data.message)
+                  } else if (currentEvent === "error") {
+                    clearTimeout(timeout)
+                    reject(new Error(data.message))
+                    return
+                  } else if (currentEvent === "result") {
+                    clearTimeout(timeout)
+                    resolve(data as T)
+                  }
+                } catch {
+                  // skip malformed JSON lines
+                }
+              }
+            }
+            return read()
+          })
+        }
+        read().catch((err) => {
+          clearTimeout(timeout)
+          reject(err)
+        })
+      })
+      .catch((err) => {
+        clearTimeout(timeout)
+        reject(err)
+      })
+  })
+}
+
 export const api = {
   createIdentity(data: {
     name: string
@@ -200,6 +283,18 @@ export const api = {
     })
   },
 
+  parseStream(
+    session_id: string,
+    raw_input: string,
+    onProgress: (step: string, message: string) => void,
+  ): Promise<ParseResponse> {
+    return readSSE<ParseResponse>(
+      "/nlp/parse/stream",
+      { session_id, raw_input },
+      onProgress,
+    )
+  },
+
   confirm(data: {
     session_id: string
     destination: string
@@ -221,6 +316,17 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ session_id }),
     })
+  },
+
+  startBiddingStream(
+    session_id: string,
+    onProgress: (step: string, message: string) => void,
+  ): Promise<BiddingResponse> {
+    return readSSE<BiddingResponse>(
+      "/bidding/start/stream",
+      { session_id },
+      onProgress,
+    )
   },
 
   acquireLock(session_id: string, quote_id: string) {

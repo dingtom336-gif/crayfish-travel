@@ -58,8 +58,11 @@ export default function HomePage() {
       // Prefetch confirm page as soon as session is created
       router.prefetch(`/confirm?session_id=${session.session_id}`)
 
-      setProgress("AI 正在解析您的需求...")
-      const parsed = await api.parse(session.session_id, form.description)
+      const parsed = await api.parseStream(
+        session.session_id,
+        form.description,
+        (_step, message) => setProgress(message),
+      )
 
       setProgress("解析完成，正在跳转...")
 

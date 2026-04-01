@@ -81,8 +81,10 @@ function ConfirmContent() {
       setProgress("正在确认行程信息...")
       await api.confirm({ session_id: sessionId, ...requirement })
 
-      setProgress("正在向供应商发起竞价...")
-      const bidding = await api.startBidding(sessionId)
+      const bidding = await api.startBiddingStream(
+        sessionId,
+        (_step, message) => setProgress(message),
+      )
       setSessionData("packages", bidding.packages)
 
       setProgress("已获取方案，正在跳转...")
