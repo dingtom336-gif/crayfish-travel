@@ -11,21 +11,48 @@ function generateTraceId(): string {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      "X-Trace-ID": generateTraceId(),
-      ...options?.headers,
-    },
-  })
+  const maxRetries = 3
+  const baseTimeout = 30000 // 30s
 
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body.error || `Request failed: ${res.status}`)
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), baseTimeout)
+
+    try {
+      const res = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          "X-Trace-ID": generateTraceId(),
+          ...options?.headers,
+        },
+      })
+      clearTimeout(timeoutId)
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error || `请求失败: ${res.status}`)
+      }
+
+      return res.json()
+    } catch (err) {
+      clearTimeout(timeoutId)
+      if (err instanceof DOMException && err.name === "AbortError") {
+        if (attempt < maxRetries - 1) {
+          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)))
+          continue
+        }
+        throw new Error("请求超时，请检查网络后重试")
+      }
+      if (attempt < maxRetries - 1 && err instanceof TypeError) {
+        await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)))
+        continue
+      }
+      throw err
+    }
   }
-
-  return res.json()
+  throw new Error("请求失败，请稍后重试")
 }
 
 export interface IdentityResponse {

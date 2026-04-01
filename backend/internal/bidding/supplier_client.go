@@ -111,11 +111,17 @@ func (m *MockSupplier) FetchQuotes(destination string, days int, budgetCents int
 
 	const refundGuaranteeFee int64 = 10000 // 100 yuan in cents
 
+	// Default budget when user doesn't specify one (500 yuan/day as baseline)
+	effectiveBudget := budgetCents
+	if effectiveBudget <= 0 {
+		effectiveBudget = int64(days) * 50000 // 500 yuan per day in cents
+	}
+
 	quotes := make([]Quote, len(mockPackages))
 	for i, pkg := range mockPackages {
 		// Price varies around budget: 80%-120% of budget
 		priceMultiplier := 0.8 + rand.Float64()*0.4
-		basePrice := int64(float64(budgetCents) * priceMultiplier)
+		basePrice := int64(float64(effectiveBudget) * priceMultiplier)
 		commission := basePrice * 5 / 100
 		totalPrice := basePrice + refundGuaranteeFee
 

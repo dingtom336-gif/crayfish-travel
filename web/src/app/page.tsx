@@ -16,6 +16,7 @@ export default function HomePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [progress, setProgress] = useState("")
 
   const [form, setForm] = useState({
     adults: 1,
@@ -43,8 +44,10 @@ export default function HomePage() {
     }
 
     setLoading(true)
+    setProgress("")
 
     try {
+      setProgress("正在创建会话...")
       const session = await api.createSession({
         adults: form.adults,
         children: form.children,
@@ -52,7 +55,13 @@ export default function HomePage() {
 
       setPersistedSessionId(session.session_id)
 
+      // Prefetch confirm page as soon as session is created
+      router.prefetch(`/confirm?session_id=${session.session_id}`)
+
+      setProgress("AI 正在解析您的需求...")
       const parsed = await api.parse(session.session_id, form.description)
+
+      setProgress("解析完成，正在跳转...")
 
       const requirement = {
         ...parsed.requirement,
@@ -70,6 +79,7 @@ export default function HomePage() {
       setError(message)
     } finally {
       setLoading(false)
+      setProgress("")
     }
   }
 
@@ -243,7 +253,7 @@ export default function HomePage() {
                       {loading ? (
                         <>
                           <Loader2 className="size-4 animate-spin" />
-                          正在解析中...
+                          {progress || "正在解析中..."}
                         </>
                       ) : (
                         <>

@@ -35,7 +35,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-body">
         <Navbar />
-        <div className="pt-16 flex-1 flex flex-col">
+        <div className="pt-16 flex-1 flex flex-col animate-[fadeIn_0.3s_ease-in]">
           {children}
         </div>
         <Footer />

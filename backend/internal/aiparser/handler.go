@@ -146,7 +146,7 @@ type ConfirmRequest struct {
 	Destination string   `json:"destination" binding:"required"`
 	StartDate   string   `json:"start_date" binding:"required"`
 	EndDate     string   `json:"end_date" binding:"required"`
-	BudgetCents int64    `json:"budget_cents" binding:"required"`
+	BudgetCents int64    `json:"budget_cents" binding:"min=0"`
 	Adults      int      `json:"adults" binding:"required,min=1"`
 	Children    int      `json:"children" binding:"min=0"`
 	Preferences []string `json:"preferences"`

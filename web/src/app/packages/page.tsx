@@ -24,11 +24,12 @@ interface PackageCardProps {
   pkg: RankedQuote
   onSelect: (pkg: RankedQuote) => void
   isLocking: boolean
+  isSelected: boolean
 }
 
-function PackageCard({ pkg, onSelect, isLocking }: PackageCardProps) {
+function PackageCard({ pkg, onSelect, isLocking, isSelected }: PackageCardProps) {
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-gray-100 border-l-4 border-l-[var(--color-success-green)] bg-white shadow-sm transition-all hover:shadow-xl">
+    <div className={`group relative overflow-hidden rounded-xl border border-gray-100 border-l-4 border-l-[var(--color-success-green)] bg-white shadow-sm transition-all hover:shadow-xl ${isSelected ? "ring-2 ring-blue-500 scale-[1.02]" : ""}`}>
       {pkg.is_best_value && (
         <div className="absolute left-0 top-4 z-20 rounded-r-full bg-[var(--color-success-green)] px-4 py-1 text-sm font-bold text-white shadow-md">
           超值首选
@@ -36,11 +37,15 @@ function PackageCard({ pkg, onSelect, isLocking }: PackageCardProps) {
       )}
 
       {pkg.image_url && (
-        <div className="relative h-56 overflow-hidden">
+        <div className="relative aspect-[3/2] overflow-hidden">
           <img
             src={pkg.image_url}
+            loading="lazy"
+            decoding="async"
+            width={600}
+            height={400}
             alt={pkg.package_title}
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
           />
           <div className="absolute right-4 top-4 flex items-center gap-1 rounded bg-white/90 px-2 py-1 text-xs font-bold text-[var(--color-success-green)] shadow-sm backdrop-blur">
@@ -110,10 +115,12 @@ function PackagesContent() {
   const [requirement] = useState<TravelRequirement | null>(() => getSessionData<TravelRequirement>("requirement"))
   const [expiresAt] = useState(() => Date.now() + LOCK_DURATION_SECONDS * 1000)
   const [lockingQuoteId, setLockingQuoteId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const handleSelect = useCallback(async (pkg: RankedQuote) => {
     if (!sessionId || !pkg.id) return
+    setSelectedId(pkg.id)
     setLockingQuoteId(pkg.id)
     setError(null)
     try {
@@ -123,6 +130,7 @@ function PackagesContent() {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "锁定失败，请重试"
       setError(message)
+      setSelectedId(null)
       setLockingQuoteId(null)
     }
   }, [sessionId, router])
@@ -218,6 +226,7 @@ function PackagesContent() {
                   pkg={pkg}
                   onSelect={handleSelect}
                   isLocking={lockingQuoteId === pkg.id}
+                  isSelected={selectedId === pkg.id}
                 />
               ))}
             </div>

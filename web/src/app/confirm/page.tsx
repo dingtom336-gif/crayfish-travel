@@ -30,6 +30,14 @@ function ConfirmContent() {
   const [validation, setValidation] = useState<DateValidation | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [progress, setProgress] = useState("")
+
+  // Prefetch the packages page as soon as we have a session
+  useEffect(() => {
+    if (sessionId) {
+      router.prefetch(`/packages?session_id=${sessionId}`)
+    }
+  }, [sessionId, router])
 
   useEffect(() => {
     const storedReq = getSessionData<TravelRequirement>("requirement")
@@ -67,19 +75,24 @@ function ConfirmContent() {
     if (!sessionId || !requirement) return
     setError("")
     setLoading(true)
+    setProgress("")
 
     try {
+      setProgress("正在确认行程信息...")
       await api.confirm({ session_id: sessionId, ...requirement })
 
+      setProgress("正在向供应商发起竞价...")
       const bidding = await api.startBidding(sessionId)
       setSessionData("packages", bidding.packages)
 
+      setProgress("已获取方案，正在跳转...")
       router.push(`/packages?session_id=${sessionId}`)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "请求失败，请重试"
       setError(message)
     } finally {
       setLoading(false)
+      setProgress("")
     }
   }
 
@@ -333,7 +346,7 @@ function ConfirmContent() {
                     {loading ? (
                       <>
                         <Loader2 className="size-4 animate-spin" />
-                        正在竞价...
+                        {progress || "正在竞价..."}
                       </>
                     ) : (
                       <>
