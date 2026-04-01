@@ -121,80 +121,18 @@ function ConfirmContent() {
         </div>
 
         {/* Page heading */}
-        <div className="mb-8">
+        <div className="mb-8 text-center">
           <h1 className="text-3xl font-extrabold font-display tracking-tight text-gray-900 mb-2">
-            告诉我们您的行程需求
+            确认您的行程信息
           </h1>
           <p className="text-gray-500">
-            我们的 AI 助手将为您实时解析需求并匹配最优资源。
+            AI 已为您智能解析需求，请确认以下信息后开始竞价
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-10 gap-12 items-start">
-          {/* Left: Chat-like UI */}
-          <div className="lg:col-span-6 space-y-8">
-            {/* Chat area */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="bg-gray-50/50 px-6 py-4 border-b border-gray-100">
-                <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
-                  <span
-                    className="inline-flex items-center justify-center w-6 h-6 rounded-full"
-                    style={{ backgroundColor: "var(--color-trust-blue)", color: "white", fontSize: 12 }}
-                  >
-                    AI
-                  </span>
-                  告诉我您的理想行程
-                </h2>
-              </div>
-
-              <div className="p-6 space-y-4 min-h-[200px]">
-                {/* User message */}
-                <div className="flex justify-end">
-                  <div
-                    className="px-4 py-2.5 rounded-2xl rounded-tr-none max-w-[85%] text-sm text-white shadow-sm"
-                    style={{ backgroundColor: "var(--color-trust-blue)" }}
-                  >
-                    {requirement.destination}，{requirement.adults}位成人
-                    {requirement.children > 0 && `${requirement.children}位儿童`}
-                    ，预算{formatYuan(requirement.budget_cents)}
-                  </div>
-                </div>
-
-                {/* AI response */}
-                <div className="flex justify-start">
-                  <div className="bg-gray-100 text-gray-700 px-4 py-2.5 rounded-2xl rounded-tl-none max-w-[85%] text-sm border border-gray-200">
-                    好的，我已为您解析完行程需求，请查看右侧确认信息。
-                  </div>
-                </div>
-              </div>
-
-              {/* AI parsed result */}
-              <div className="mx-6 mb-6 bg-blue-50/50 rounded-xl p-6 border border-blue-100 border-dashed">
-                <div className="flex items-center space-x-3 mb-4">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "var(--color-success-green)" }} />
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "var(--color-success-green)" }} />
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "var(--color-success-green)" }} />
-                  </div>
-                  <span className="font-medium" style={{ color: "var(--color-success-green)" }}>
-                    AI 已完成需求解析
-                  </span>
-                </div>
-                <div className="space-y-2 text-sm text-gray-600">
-                  <p><span className="font-semibold text-gray-800">目的地：</span>{requirement.destination}</p>
-                  <p><span className="font-semibold text-gray-800">出行日期：</span>{formatDate(requirement.start_date)} - {formatDate(requirement.end_date)}</p>
-                  <p><span className="font-semibold text-gray-800">出行人数：</span>{requirement.adults}位成人{requirement.children > 0 && ` + ${requirement.children}位儿童`}</p>
-                  <p><span className="font-semibold text-gray-800">预算：</span>{formatYuan(requirement.budget_cents)}</p>
-                  {(requirement.preferences ?? []).length > 0 && (
-                    <p><span className="font-semibold text-gray-800">偏好：</span>{(requirement.preferences ?? []).join("、")}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Confirmation card */}
-          <div className="lg:col-span-4 sticky top-24">
+        <div className="max-w-2xl mx-auto">
+          {/* Confirmation card - centered, full width */}
+          <div>
             <div className="bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden">
               <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
                 <h2 className="font-bold text-lg text-gray-800 flex items-center gap-2">

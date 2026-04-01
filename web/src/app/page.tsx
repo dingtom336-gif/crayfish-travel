@@ -66,10 +66,15 @@ export default function HomePage() {
 
       setProgress("解析完成，正在跳转...")
 
+      // Use form dates if provided, otherwise fall back to LLM dates, then defaults
+      const today = new Date()
+      const defaultStart = new Date(today.getTime() + 7 * 86400000).toISOString().split("T")[0]
+      const defaultEnd = new Date(today.getTime() + 12 * 86400000).toISOString().split("T")[0]
+
       const requirement = {
         ...parsed.requirement,
-        start_date: form.start_date,
-        end_date: form.end_date,
+        start_date: form.start_date || parsed.requirement.start_date || defaultStart,
+        end_date: form.end_date || parsed.requirement.end_date || defaultEnd,
         adults: form.adults,
         children: form.children,
       }
