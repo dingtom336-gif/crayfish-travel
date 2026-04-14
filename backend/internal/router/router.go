@@ -1,9 +1,13 @@
 package router
 
 import (
+	"context"
+	"database/sql"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	goredis "github.com/redis/go-redis/v9"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/xiaozhang/crayfish-travel/backend/internal/bidding"
@@ -27,8 +31,14 @@ type Handlers struct {
 	RiskControl *riskcontrol.Handler
 }
 
+// Dependencies holds shared infrastructure for health checks.
+type Dependencies struct {
+	DB    *sql.DB
+	Redis *goredis.Client
+}
+
 // Setup configures all routes and middleware.
-func Setup(mode string, h *Handlers, allowedOrigins []string, adminToken string) *gin.Engine {
+func Setup(mode string, h *Handlers, allowedOrigins []string, adminToken string, deps ...Dependencies) *gin.Engine {
 	gin.SetMode(mode)
 	r := gin.New()
 
@@ -39,11 +49,53 @@ func Setup(mode string, h *Handlers, allowedOrigins []string, adminToken string)
 	r.Use(middleware.TraceID())
 	r.Use(middleware.Metrics())
 
-	// Health check
+	// Liveness probe (always returns ok -- process is alive)
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":   "ok",
 			"trace_id": middleware.GetTraceID(c),
+		})
+	})
+
+	// Readiness probe (checks DB + Redis connectivity)
+	r.GET("/ready", func(c *gin.Context) {
+		traceID := middleware.GetTraceID(c)
+		checks := gin.H{}
+		allHealthy := true
+
+		if len(deps) > 0 && deps[0].DB != nil {
+			ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
+			defer cancel()
+			if err := deps[0].DB.PingContext(ctx); err != nil {
+				checks["postgres"] = "unhealthy"
+				allHealthy = false
+			} else {
+				checks["postgres"] = "ok"
+			}
+		}
+
+		if len(deps) > 0 && deps[0].Redis != nil {
+			ctx, cancel := context.WithTimeout(c.Request.Context(), 2*time.Second)
+			defer cancel()
+			if err := deps[0].Redis.Ping(ctx).Err(); err != nil {
+				checks["redis"] = "unhealthy"
+				allHealthy = false
+			} else {
+				checks["redis"] = "ok"
+			}
+		}
+
+		status := http.StatusOK
+		statusStr := "ready"
+		if !allHealthy {
+			status = http.StatusServiceUnavailable
+			statusStr = "not_ready"
+		}
+
+		c.JSON(status, gin.H{
+			"status":   statusStr,
+			"checks":   checks,
+			"trace_id": traceID,
 		})
 	})
 

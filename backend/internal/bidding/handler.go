@@ -66,30 +66,14 @@ func (h *Handler) Start(c *gin.Context) {
 	var dest string
 	var budgetCents int64
 	var adults, children int
-	var startDate, endDate string
+	var startTime, endTime time.Time
 	err = h.db.QueryRow(`
 		SELECT destination, budget_cents, adults, children, start_date, end_date
 		FROM sessions WHERE id = $1 AND status = 'requirements_confirmed'`,
 		sessionID,
-	).Scan(&dest, &budgetCents, &adults, &children, &startDate, &endDate)
+	).Scan(&dest, &budgetCents, &adults, &children, &startTime, &endTime)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session not found or requirements not confirmed"})
-		return
-	}
-
-	// Validate and parse dates
-	if startDate == "" || endDate == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing start_date or end_date, please confirm requirements first"})
-		return
-	}
-	startTime, err := time.Parse("2006-01-02", startDate)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid start_date format"})
-		return
-	}
-	endTime, err := time.Parse("2006-01-02", endDate)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid end_date format"})
 		return
 	}
 	days := int(endTime.Sub(startTime).Hours() / 24)
@@ -181,32 +165,17 @@ func (h *Handler) StartSSE(c *gin.Context) {
 	var dest string
 	var budgetCents int64
 	var adults, children int
-	var startDate, endDate string
+	var startTime, endTime time.Time
 	err = h.db.QueryRow(`
 		SELECT destination, budget_cents, adults, children, start_date, end_date
 		FROM sessions WHERE id = $1 AND status = 'requirements_confirmed'`,
 		sessionID,
-	).Scan(&dest, &budgetCents, &adults, &children, &startDate, &endDate)
+	).Scan(&dest, &budgetCents, &adults, &children, &startTime, &endTime)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "session not found or requirements not confirmed"})
 		return
 	}
 
-	// Validate and parse dates
-	if startDate == "" || endDate == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "session missing start_date or end_date, please confirm requirements first"})
-		return
-	}
-	startTime, err := time.Parse("2006-01-02", startDate)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid start_date format"})
-		return
-	}
-	endTime, err := time.Parse("2006-01-02", endDate)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid end_date format"})
-		return
-	}
 	days := int(endTime.Sub(startTime).Hours() / 24)
 	if days < 1 {
 		days = 1

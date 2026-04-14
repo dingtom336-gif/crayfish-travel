@@ -93,6 +93,10 @@
 }
 
 .dark {
+  --color-trust-blue: #4da3ff;
+  --color-vibrant-orange: #ff8c66;
+  --color-success-green: #5ec479;
+  --color-trust-blue-dark: #3b8de8;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -140,5 +144,19 @@
   }
   html {
     @apply font-sans;
+  }
+  /* Accessible focus-visible ring for keyboard navigation */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-[var(--color-trust-blue)];
+  }
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }

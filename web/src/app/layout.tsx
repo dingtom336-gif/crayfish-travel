@@ -32,10 +32,17 @@ export default function RootLayout({
     <html
       lang="zh-CN"
       className={`${plusJakarta.variable} ${inter.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-body">
+      <body className="min-h-full flex flex-col font-body bg-background text-foreground">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:rounded-lg focus:bg-[var(--color-trust-blue)] focus:px-4 focus:py-2 focus:text-white focus:shadow-lg"
+        >
+          Skip to main content
+        </a>
         <Navbar />
-        <div className="pt-16 flex-1 flex flex-col animate-[fadeIn_0.3s_ease-in]">
+        <div id="main-content" className="pt-16 flex-1 flex flex-col animate-[fadeIn_0.3s_ease-in]">
           {children}
         </div>
         <Footer />

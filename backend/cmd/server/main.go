@@ -107,7 +107,8 @@ func main() {
 		RiskControl: riskcontrolHandler,
 	}
 
-	r := router.Setup(cfg.Server.Mode, handlers, cfg.AllowedOrigins, cfg.AdminToken)
+	deps := router.Dependencies{DB: db, Redis: rdb}
+	r := router.Setup(cfg.Server.Mode, handlers, cfg.AllowedOrigins, cfg.AdminToken, deps)
 
 	log.Printf("Crayfish Travel server starting on :%s", cfg.Server.Port)
 	if err := r.Run(":" + cfg.Server.Port); err != nil {

@@ -54,6 +54,12 @@ services:
       SERVER_MODE: release
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   web:
     image: node:20-alpine
@@ -67,7 +73,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      VITE_API_BASE_URL: http://backend:8080
+      NEXT_PUBLIC_API_BASE: http://backend:8080/api/v1
 
 volumes:
   pgdata:

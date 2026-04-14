@@ -106,11 +106,19 @@ function ConfirmContent() {
     )
   }
 
+  const travelDays = (() => {
+    if (!requirement.start_date || !requirement.end_date) return 0
+    const start = new Date(requirement.start_date).getTime()
+    const end = new Date(requirement.end_date).getTime()
+    if (isNaN(start) || isNaN(end)) return 0
+    return Math.round((end - start) / 86400000)
+  })()
+
   return (
     <main className="bg-gray-50 py-8 md:py-12 flex-1">
       <div className="max-w-7xl mx-auto px-4 md:px-8">
         {/* Step Progress */}
-        <div className="mb-12 flex justify-center">
+        <div className="mb-10 flex justify-center">
           <StepProgress
             steps={[
               { label: "需求描述", status: "completed" },
@@ -120,203 +128,198 @@ function ConfirmContent() {
           />
         </div>
 
-        {/* Page heading */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-extrabold font-display tracking-tight text-gray-900 mb-2">
-            确认您的行程信息
-          </h1>
-          <p className="text-gray-500">
-            AI 已为您智能解析需求，请确认以下信息后开始竞价
-          </p>
-        </div>
-
         <div className="max-w-2xl mx-auto">
-          {/* Confirmation card - centered, full width */}
-          <div>
-            <div className="bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden">
-              <div className="bg-gray-50 px-6 py-4 border-b border-gray-100">
-                <h2 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-                  <ShieldCheck className="size-5" style={{ color: "var(--color-trust-blue)" }} />
-                  已确定的行程详情
-                </h2>
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            {/* Destination hero image */}
+            <div className="h-40 bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
+              <MapPin className="size-10 text-blue-200" />
+            </div>
+
+            <div className="p-6 md:p-8 space-y-6">
+              {/* Title inside card */}
+              <div>
+                <h1 className="text-2xl font-extrabold font-display tracking-tight text-gray-900 flex items-center gap-2">
+                  <ShieldCheck className="size-6 shrink-0" style={{ color: "var(--color-trust-blue)" }} />
+                  确认您的行程信息
+                </h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  AI 已为您智能解析需求，请确认以下信息后开始竞价
+                </p>
               </div>
 
-              <div className="p-6 space-y-6">
-                {/* Peak season alert */}
-                {validation?.is_peak_season && (
-                  <div
-                    className="flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold text-white"
-                    style={{ backgroundColor: "var(--color-vibrant-orange)" }}
-                  >
-                    <AlertTriangle className="size-4 shrink-0" />
-                    暑假高峰期 - 价格可能略有上浮
-                  </div>
-                )}
+              {/* Peak season alert */}
+              {validation?.is_peak_season && (
+                <div
+                  className="flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold text-white"
+                  style={{ backgroundColor: "var(--color-vibrant-orange)" }}
+                >
+                  <AlertTriangle className="size-4 shrink-0" />
+                  暑假高峰期 - 价格可能略有上浮
+                </div>
+              )}
 
-                {/* Details */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">目的地</p>
-                      <Badge
-                        className="text-white text-sm font-bold"
-                        style={{ backgroundColor: "var(--color-trust-blue)" }}
-                      >
-                        <MapPin className="size-3 mr-1" />
-                        {requirement.destination}
-                      </Badge>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">出行人数</p>
-                      <div className="flex items-center text-sm font-bold text-gray-700">
-                        <Users className="size-4 mr-1" />
-                        {requirement.adults}位成人
-                        {requirement.children > 0 && ` + ${requirement.children}位儿童`}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">出发</p>
-                      <div className="flex items-center text-sm font-bold text-gray-700">
-                        <Calendar className="size-4 mr-1 shrink-0" style={{ color: "var(--color-trust-blue)" }} />
-                        {formatDate(requirement.start_date)}
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">返回</p>
-                      <div className="flex items-center text-sm font-bold text-gray-700">
-                        <Calendar className="size-4 mr-1 shrink-0" style={{ color: "var(--color-trust-blue)" }} />
-                        {formatDate(requirement.end_date)}
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">时长</p>
-                      <p className="text-sm font-bold text-gray-700">
-                        {(() => {
-                          if (!requirement.start_date || !requirement.end_date) return "-"
-                          const start = new Date(requirement.start_date).getTime()
-                          const end = new Date(requirement.end_date).getTime()
-                          if (isNaN(start) || isNaN(end)) return "-"
-                          const days = Math.round((end - start) / 86400000)
-                          return days > 0 ? `${days}天` : "-"
-                        })()}
-                      </p>
-                    </div>
+              {/* Destination + Travelers */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                  <p className="text-xs text-gray-400 font-medium">目的地</p>
+                  <Badge
+                    className="text-white text-sm font-bold"
+                    style={{ backgroundColor: "var(--color-trust-blue)" }}
+                  >
+                    <MapPin className="size-3 mr-1" />
+                    {requirement.destination}
+                  </Badge>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                  <p className="text-xs text-gray-400 font-medium">出行人数</p>
+                  <div className="flex items-center text-sm font-bold text-gray-700">
+                    <Users className="size-4 mr-1.5" style={{ color: "var(--color-trust-blue)" }} />
+                    {requirement.adults}位成人
+                    {requirement.children > 0 && ` + ${requirement.children}位儿童`}
                   </div>
                 </div>
+              </div>
 
-                {/* Preferences */}
-                {(requirement.preferences ?? []).length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">偏好设置</p>
-                    <div className="flex flex-wrap gap-2">
-                      {(requirement.preferences ?? []).map((pref) => (
-                        <span
-                          key={pref}
-                          className="px-3 py-1 rounded-lg text-xs font-bold border"
-                          style={{
-                            backgroundColor: "rgba(52, 168, 83, 0.1)",
-                            color: "var(--color-success-green)",
-                            borderColor: "rgba(52, 168, 83, 0.2)",
-                          }}
-                        >
-                          {pref}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+              {/* Dates + Duration */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-gray-50 rounded-xl p-4 space-y-1">
+                  <p className="text-xs text-gray-400 font-medium">出发日期</p>
+                  <p className="text-base font-bold text-gray-800">{formatDate(requirement.start_date)}</p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-4 space-y-1">
+                  <p className="text-xs text-gray-400 font-medium">返回日期</p>
+                  <p className="text-base font-bold text-gray-800">{formatDate(requirement.end_date)}</p>
+                </div>
+                <div
+                  className="rounded-xl p-4 flex flex-col items-center justify-center"
+                  style={{ backgroundColor: "rgba(26, 115, 232, 0.06)" }}
+                >
+                  <Calendar className="size-5 mb-1" style={{ color: "var(--color-trust-blue)" }} />
+                  <span className="text-lg font-extrabold" style={{ color: "var(--color-trust-blue)" }}>
+                    {travelDays > 0 ? `${travelDays}天` : "-"}
+                  </span>
+                </div>
+              </div>
 
-                {/* Budget */}
-                <div className="pt-4 border-t border-gray-50">
-                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">预估预算</p>
-                  <div className="flex items-baseline gap-2">
+              {/* Budget - orange left border */}
+              <div
+                className="rounded-xl p-4 border-l-4"
+                style={{
+                  backgroundColor: "rgba(234, 67, 53, 0.04)",
+                  borderLeftColor: "var(--color-vibrant-orange)",
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium mb-1">预算要求</p>
                     <span
-                      className="text-2xl font-extrabold tracking-tight"
+                      className="text-xl font-extrabold tracking-tight"
                       style={{ color: "var(--color-vibrant-orange)" }}
                     >
                       {requirement.budget_cents > 0 ? formatYuan(requirement.budget_cents) : "由供应商竞价"}
                     </span>
-                  </div>
-                  {requirement.budget_cents === 0 && (
-                    <p className="text-xs text-gray-400 mt-1">
-                      未指定预算，系统将根据行程推荐最优方案
-                    </p>
-                  )}
-                </div>
-
-                {/* Refund guarantee */}
-                <div
-                  className="flex items-center gap-2 p-3 rounded-lg border"
-                  style={{
-                    backgroundColor: "rgba(52, 168, 83, 0.05)",
-                    borderColor: "rgba(52, 168, 83, 0.2)",
-                  }}
-                >
-                  <ShieldCheck className="size-5 shrink-0" style={{ color: "var(--color-success-green)" }} />
-                  <p className="text-[11px] font-medium leading-tight" style={{ color: "var(--color-success-green)" }}>
-                    已激活：退改权益服务。具体退款规则请参见<a href="/refund-policy" className="underline">退款权益说明</a>。
-                  </p>
-                </div>
-
-                {/* Compliance note */}
-                <div className="flex items-start gap-2 pt-2">
-                  <Info className="size-4 text-gray-300 mt-0.5 shrink-0" />
-                  <p className="text-[10px] text-gray-400 leading-relaxed">
-                    该预算已包含基础行程费用及退改权益服务费。高峰期价格可能略有上浮，具体以最终供应商竞价为准。
-                  </p>
-                </div>
-
-                {error && (
-                  <div className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                    {error}
-                  </div>
-                )}
-
-                {/* Action buttons */}
-                <div className="grid grid-cols-1 gap-3 pt-2">
-                  <Button
-                    size="lg"
-                    className="w-full h-14 text-white font-extrabold text-lg rounded-xl shadow-lg"
-                    style={{ backgroundColor: "var(--color-vibrant-orange)" }}
-                    disabled={loading}
-                    onClick={handleConfirm}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="size-4 animate-spin" />
-                        {progress || "正在竞价..."}
-                      </>
-                    ) : (
-                      <>
-                        确认并开始竞价
-                        <Plane className="size-5 ml-2" />
-                      </>
+                    {requirement.budget_cents === 0 && (
+                      <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                        <Info className="size-3 shrink-0" />
+                        未指定预算，系统将推荐最优方案
+                      </p>
                     )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="w-full"
-                    onClick={() => router.push("/")}
+                  </div>
+                  <div
+                    className="flex items-center justify-center size-10 rounded-full"
+                    style={{ backgroundColor: "rgba(234, 67, 53, 0.1)" }}
                   >
-                    修改行程需求
-                  </Button>
+                    <span className="text-lg" style={{ color: "var(--color-vibrant-orange)" }}>$</span>
+                  </div>
                 </div>
+              </div>
+
+              {/* Preferences */}
+              {(requirement.preferences ?? []).length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-400 font-medium">旅行偏好</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(requirement.preferences ?? []).map((pref) => (
+                      <span
+                        key={pref}
+                        className="px-3 py-1.5 rounded-full text-xs font-bold border"
+                        style={{
+                          backgroundColor: "rgba(52, 168, 83, 0.08)",
+                          color: "var(--color-success-green)",
+                          borderColor: "rgba(52, 168, 83, 0.2)",
+                        }}
+                      >
+                        {pref}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Refund guarantee banner */}
+              <div
+                className="flex items-center gap-2.5 px-4 py-3 rounded-xl"
+                style={{ backgroundColor: "rgba(52, 168, 83, 0.08)" }}
+              >
+                <ShieldCheck className="size-5 shrink-0" style={{ color: "var(--color-success-green)" }} />
+                <span className="text-sm font-bold" style={{ color: "var(--color-success-green)" }}>
+                  100% 无忧退款保障
+                </span>
+              </div>
+
+              {/* Sync message */}
+              <p className="text-center text-xs text-gray-400">
+                确认后需求将实时同步给 5000+ 认证供应商进行竞价
+              </p>
+
+              {error && (
+                <div className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {error}
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="grid grid-cols-1 gap-3">
+                <Button
+                  size="lg"
+                  className="w-full h-14 text-white font-extrabold text-lg rounded-xl shadow-lg"
+                  style={{ backgroundColor: "var(--color-vibrant-orange)" }}
+                  disabled={loading}
+                  onClick={handleConfirm}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      {progress || "正在竞价..."}
+                    </>
+                  ) : (
+                    <>
+                      确认并开始竞价
+                      <Plane className="size-5 ml-2" />
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full rounded-xl"
+                  onClick={() => router.push("/")}
+                >
+                  修改行程需求
+                </Button>
               </div>
             </div>
+          </div>
 
-            {/* Trust footer */}
-            <div className="mt-6 flex items-center justify-center gap-6 text-gray-400">
-              <div className="flex items-center gap-1">
-                <ShieldCheck className="size-4" />
-                <span className="text-[10px] uppercase font-bold tracking-widest">安全加密</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Sparkles className="size-4" />
-                <span className="text-[10px] uppercase font-bold tracking-widest">官方认证</span>
-              </div>
+          {/* Trust footer */}
+          <div className="mt-6 flex items-center justify-center gap-6 text-gray-400">
+            <div className="flex items-center gap-1">
+              <ShieldCheck className="size-4" />
+              <span className="text-[10px] uppercase font-bold tracking-widest">安全加密</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Sparkles className="size-4" />
+              <span className="text-[10px] uppercase font-bold tracking-widest">官方认证</span>
             </div>
           </div>
         </div>

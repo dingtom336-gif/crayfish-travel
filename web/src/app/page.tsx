@@ -92,7 +92,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="bg-gray-50 py-12 md:py-20">
+    <main className="bg-gray-50 py-12 md:py-20 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 md:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           {/* Left: Trust Building */}
@@ -102,10 +102,10 @@ export default function HomePage() {
 
           {/* Right: Form Card */}
           <div className="lg:col-span-5">
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden sticky top-24">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden sticky top-24 dark:bg-gray-800 dark:border-gray-700">
               <div className="p-8">
                 <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-2xl font-bold font-display">描述您的旅行需求</h2>
+                  <h2 className="text-2xl font-bold font-display dark:text-gray-100">描述您的旅行需求</h2>
                 </div>
 
                 <fieldset disabled={loading} className="contents">
@@ -113,20 +113,22 @@ export default function HomePage() {
                     {/* Travelers */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-sm font-semibold text-gray-700">成人</Label>
-                        <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2 border border-gray-100">
+                        <Label className="text-sm font-semibold text-gray-700 dark:text-gray-300">成人</Label>
+                        <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2 border border-gray-100 dark:bg-gray-700 dark:border-gray-600">
                           <button
                             type="button"
-                            className="w-10 h-10 flex items-center justify-center text-xl font-bold rounded-lg hover:bg-blue-50 active:bg-blue-100 transition-colors cursor-pointer select-none"
+                            aria-label="减少成人人数"
+                            className="w-10 h-10 flex items-center justify-center text-xl font-bold rounded-lg hover:bg-blue-50 active:bg-blue-100 transition-colors cursor-pointer select-none dark:hover:bg-blue-900/30"
                             style={{ color: "var(--color-trust-blue)" }}
                             onClick={() => updateField("adults", Math.max(1, form.adults - 1))}
                           >
                             -
                           </button>
-                          <span className="font-bold">{form.adults}</span>
+                          <span className="font-bold dark:text-gray-100" aria-live="polite">{form.adults}</span>
                           <button
                             type="button"
-                            className="w-10 h-10 flex items-center justify-center text-xl font-bold rounded-lg hover:bg-blue-50 active:bg-blue-100 transition-colors cursor-pointer select-none"
+                            aria-label="增加成人人数"
+                            className="w-10 h-10 flex items-center justify-center text-xl font-bold rounded-lg hover:bg-blue-50 active:bg-blue-100 transition-colors cursor-pointer select-none dark:hover:bg-blue-900/30"
                             style={{ color: "var(--color-trust-blue)" }}
                             onClick={() => updateField("adults", form.adults + 1)}
                           >
@@ -135,20 +137,22 @@ export default function HomePage() {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-sm font-semibold text-gray-700">儿童</Label>
-                        <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2 border border-gray-100">
+                        <Label className="text-sm font-semibold text-gray-700 dark:text-gray-300">儿童</Label>
+                        <div className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2 border border-gray-100 dark:bg-gray-700 dark:border-gray-600">
                           <button
                             type="button"
-                            className="w-10 h-10 flex items-center justify-center text-xl font-bold rounded-lg hover:bg-blue-50 active:bg-blue-100 transition-colors cursor-pointer select-none"
+                            aria-label="减少儿童人数"
+                            className="w-10 h-10 flex items-center justify-center text-xl font-bold rounded-lg hover:bg-blue-50 active:bg-blue-100 transition-colors cursor-pointer select-none dark:hover:bg-blue-900/30"
                             style={{ color: "var(--color-trust-blue)" }}
                             onClick={() => updateField("children", Math.max(0, form.children - 1))}
                           >
                             -
                           </button>
-                          <span className="font-bold">{form.children}</span>
+                          <span className="font-bold dark:text-gray-100" aria-live="polite">{form.children}</span>
                           <button
                             type="button"
-                            className="w-10 h-10 flex items-center justify-center text-xl font-bold rounded-lg hover:bg-blue-50 active:bg-blue-100 transition-colors cursor-pointer select-none"
+                            aria-label="增加儿童人数"
+                            className="w-10 h-10 flex items-center justify-center text-xl font-bold rounded-lg hover:bg-blue-50 active:bg-blue-100 transition-colors cursor-pointer select-none dark:hover:bg-blue-900/30"
                             style={{ color: "var(--color-trust-blue)" }}
                             onClick={() => updateField("children", form.children + 1)}
                           >
@@ -185,7 +189,7 @@ export default function HomePage() {
                           onChange={(e) => updateField("start_date", e.target.value)}
                           min={new Date().toISOString().split("T")[0]}
                           className="sr-only"
-                          aria-hidden="true"
+                          aria-label="Select departure date"
                         />
                       </div>
                       <div>
@@ -213,7 +217,7 @@ export default function HomePage() {
                           onChange={(e) => updateField("end_date", e.target.value)}
                           min={form.start_date || new Date().toISOString().split("T")[0]}
                           className="sr-only"
-                          aria-hidden="true"
+                          aria-label="Select return date"
                         />
                       </div>
                     </div>
